@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dividend Tracker — NorthStock</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--navy:#06111f;--navy2:#0d1f3c;--blue:#3b9eff;--blue2:#1a7fe0;--green:#22c55e;--red:#ef4444;--gold:#f59e0b;--purple:#a78bfa;--text:#f0f4f8;--text2:#8ea4bc;--text3:#4d6278;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--card:rgba(255,255,255,0.04);--card2:rgba(255,255,255,0.07);--radius:10px;--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--navy);color:var(--text);min-height:100vh}
+a{text-decoration:none;color:inherit}
+.ticker-bar{background:var(--navy2);border-bottom:1px solid var(--border);padding:7px 0;overflow:hidden}
+.ticker-track{display:flex;gap:36px;animation:ticker 40s linear infinite;white-space:nowrap}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ti{display:flex;gap:7px;align-items:center;font-size:11px;font-family:var(--mono)}
+.ti-sym{color:var(--text2);font-weight:500}.ti-p{color:var(--text)}
+.ti-c.up{color:var(--green)}.ti-c.dn{color:var(--red)}
+.tdot{width:3px;height:3px;border-radius:50%;background:var(--border2)}
+nav{background:var(--navy2);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.logo{font-size:19px;font-weight:600;letter-spacing:-.4px}.logo span{color:var(--blue)}
+.nav-links{display:flex;gap:2px}
+.nav-links a{color:var(--text2);font-size:13px;padding:6px 11px;border-radius:6px;transition:all .15s}
+.nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--card2)}
+.nav-right{display:flex;gap:8px}
+.btn-ghost{font-size:12px;padding:6px 12px;border-radius:6px;border:1px solid var(--border);color:var(--text2);cursor:pointer;background:transparent}
+.btn-primary{font-size:12px;padding:6px 14px;border-radius:6px;border:none;background:var(--blue);color:#fff;cursor:pointer;font-weight:500}
+.page{max-width:1200px;margin:0 auto;padding:28px 32px}
+.page-header{margin-bottom:24px}
+.page-header h1{font-size:26px;font-weight:600;letter-spacing:-.4px;margin-bottom:4px}
+.page-header p{font-size:13px;color:var(--text3)}
+
+/* SUMMARY */
+.summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.sum-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.sum-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.sum-val{font-size:22px;font-weight:600;font-family:var(--mono)}
+.sum-val.green{color:var(--green)}.sum-val.gold{color:var(--gold)}.sum-val.blue{color:var(--blue)}
+.sum-sub{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* TWO COL */
+.two-col{display:grid;grid-template-columns:1fr 360px;gap:20px;margin-bottom:24px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.card-title{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:16px}
+
+/* FILTERS */
+.filters{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.filter-btn{font-size:12px;padding:5px 14px;border-radius:20px;border:1px solid var(--border);color:var(--text2);cursor:pointer;background:transparent;font-family:var(--font);transition:all .15s}
+.filter-btn:hover{color:var(--text)}
+.filter-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
+.sort-select{background:var(--navy2);border:1px solid var(--border);border-radius:7px;padding:5px 12px;color:var(--text2);font-size:12px;cursor:pointer;margin-left:auto;font-family:var(--font)}
+
+/* DIVIDEND TABLE */
+.div-table{width:100%;border-collapse:collapse}
+.div-table th{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:500;cursor:pointer}
+.div-table th:hover{color:var(--text2)}
+.div-table th.r{text-align:right}
+.div-table td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+.div-table td.r{text-align:right;font-family:var(--mono);font-size:12px}
+.div-table tr:last-child td{border-bottom:none}
+.div-table tr:hover td{background:var(--card2)}
+.sym-cell{display:flex;align-items:center;gap:10px}
+.sym-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--mono);flex-shrink:0}
+.sym-name{font-size:11px;color:var(--text3)}
+.yield-bar{display:flex;align-items:center;gap:8px}
+.ybar-bg{width:80px;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.ybar-fill{height:100%;border-radius:3px;background:var(--green)}
+.safety-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px}
+.safety-badge.high{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.safety-badge.medium{background:rgba(245,158,11,.1);color:var(--gold);border:1px solid rgba(245,158,11,.2)}
+.safety-badge.low{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.freq-badge{font-size:10px;padding:2px 7px;border-radius:4px;background:var(--card2);color:var(--text3)}
+.streak-val{font-size:13px;font-weight:500;color:var(--gold);font-family:var(--mono)}
+
+/* CALENDAR */
+.div-calendar{}
+.cal-month{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.cal-item{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
+.cal-item:last-child{border-bottom:none}
+.cal-sym{font-size:12px;font-weight:600;font-family:var(--mono);color:var(--text)}
+.cal-date{font-size:11px;color:var(--text3)}
+.cal-amt{font-size:12px;font-weight:500;color:var(--green);font-family:var(--mono)}
+.cal-exdate{font-size:10px;color:var(--gold)}
+
+.disclaimer{background:var(--navy2);border-top:1px solid var(--border);padding:14px 32px}
+.disclaimer p{font-size:11px;color:var(--text3);max-width:1200px;margin:0 auto}
+footer{background:var(--navy);border-top:1px solid var(--border);padding:18px 32px;display:flex;justify-content:space-between;align-items:center}
+.footer-copy{font-size:12px;color:var(--text3)}
+.footer-links{display:flex;gap:14px}
+.footer-links a{font-size:12px;color:var(--text3)}
+@media(max-width:900px){nav{padding:0 16px}.nav-links{display:none}.page{padding:18px 16px}.two-col{grid-template-columns:1fr}.summary-row{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<div class="ticker-bar">
+  <div class="ticker-track">
+    <div class="ti"><span class="ti-sym">S&P 500</span><span class="ti-p">5,312</span><span class="ti-c up">▲+0.42%</span></div><div class="tdot"></div>
+    <div class="ti"><span class="ti-sym">TSX</span><span class="ti-p">24,188</span><span class="ti-c up">▲+0.28%</span></div><div class="tdot"></div>
+    <div class="ti"><span class="ti-sym">ENB.TO</span><span class="ti-p">$58.30</span><span class="ti-c up">▲+0.44%</span></div><div class="tdot"></div>
+    <div class="ti"><span class="ti-sym">RY.TO</span><span class="ti-p">$174.20</span><span class="ti-c up">▲+0.62%</span></div><div class="tdot"></div>
+    <div class="ti"><span class="ti-sym">S&P 500</span><span class="ti-p">5,312</span><span class="ti-c up">▲+0.42%</span></div><div class="tdot"></div>
+    <div class="ti"><span class="ti-sym">TSX</span><span class="ti-p">24,188</span><span class="ti-c up">▲+0.28%</span></div>
+  </div>
+</div>
+
+<nav>
+  <div class="logo">North<span>Stock</span></div>
+  <div class="nav-links">
+    <a href="index.html">News</a>
+    <a href="earnings.html">Earnings Calendar</a>
+    <a href="screener.html">Top Picks</a>
+    <a href="dividends.html" class="active">Dividends</a>
+    <a href="canadian-stocks.html">Canadian Stocks</a>
+    <a href="us-stocks.html">US Stocks</a>
+    <a href="crypto.html">Crypto</a>
+    <a href="northstock-portfolio-live.html" style="color:#3b9eff">My Portfolio</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn-ghost" onclick="window.location.href='auth.html'">Sign in</button>
+    <button class="btn-primary" onclick="window.location.href='auth.html?mode=signup'">Create account</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1>Dividend Tracker</h1>
+    <p>Top dividend stocks for Canadian investors — TFSA & RRSP friendly</p>
+  </div>
+
+  <div class="summary-row">
+    <div class="sum-card">
+      <div class="sum-label">Avg yield (TSX top 20)</div>
+      <div class="sum-val green">4.82%</div>
+      <div class="sum-sub">vs 1.3% S&P 500 avg</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Dividend aristocrats</div>
+      <div class="sum-val gold">12</div>
+      <div class="sum-sub">25+ years of increases</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Ex-dividend this week</div>
+      <div class="sum-val blue">8</div>
+      <div class="sum-sub">stocks going ex-div</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Avg payout ratio</div>
+      <div class="sum-val">62%</div>
+      <div class="sum-sub">healthy sustainability</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- CHART -->
+    <div class="card">
+      <div class="card-title">Dividend income projection — $10,000 invested</div>
+      <canvas id="divChart" height="200"></canvas>
+    </div>
+
+    <!-- UPCOMING DIVIDENDS -->
+    <div class="card">
+      <div class="card-title">Upcoming dividend payments</div>
+      <div class="cal-month">April 2026</div>
+      <div class="cal-item">
+        <div><div class="cal-sym">ENB.TO</div><div class="cal-exdate">Ex-div: Apr 23</div></div>
+        <div style="text-align:right"><div class="cal-amt">$0.9075/share</div><div class="cal-date">Pay: May 1</div></div>
+      </div>
+      <div class="cal-item">
+        <div><div class="cal-sym">RY.TO</div><div class="cal-exdate">Ex-div: Apr 22</div></div>
+        <div style="text-align:right"><div class="cal-amt">$1.42/share</div><div class="cal-date">Pay: May 24</div></div>
+      </div>
+      <div class="cal-item">
+        <div><div class="cal-sym">TD.TO</div><div class="cal-exdate">Ex-div: Apr 9</div></div>
+        <div style="text-align:right"><div class="cal-amt">$1.02/share</div><div class="cal-date">Pay: Apr 30</div></div>
+      </div>
+      <div class="cal-item">
+        <div><div class="cal-sym">T.TO</div><div class="cal-exdate">Ex-div: Apr 10</div></div>
+        <div style="text-align:right"><div class="cal-amt">$0.3975/share</div><div class="cal-date">Pay: May 2</div></div>
+      </div>
+      <div class="cal-month" style="margin-top:16px">May 2026</div>
+      <div class="cal-item">
+        <div><div class="cal-sym">BCE.TO</div><div class="cal-exdate">Ex-div: May 15</div></div>
+        <div style="text-align:right"><div class="cal-amt">$0.9675/share</div><div class="cal-date">Pay: Jun 15</div></div>
+      </div>
+      <div class="cal-item">
+        <div><div class="cal-sym">BMO.TO</div><div class="cal-exdate">Ex-div: May 1</div></div>
+        <div style="text-align:right"><div class="cal-amt">$1.55/share</div><div class="cal-date">Pay: May 27</div></div>
+      </div>
+      <div class="cal-item">
+        <div><div class="cal-sym">CNR.TO</div><div class="cal-exdate">Ex-div: May 30</div></div>
+        <div style="text-align:right"><div class="cal-amt">$0.8450/share</div><div class="cal-date">Pay: Jun 30</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters">
+    <button class="filter-btn active" onclick="filterDiv('all',this)">All</button>
+    <button class="filter-btn" onclick="filterDiv('tsx',this)">TSX 🍁</button>
+    <button class="filter-btn" onclick="filterDiv('us',this)">US</button>
+    <button class="filter-btn" onclick="filterDiv('high',this)">High yield (5%+)</button>
+    <button class="filter-btn" onclick="filterDiv('aristocrat',this)">Aristocrats</button>
+    <button class="filter-btn" onclick="filterDiv('safe',this)">Safe payout</button>
+    <select class="sort-select" onchange="sortDiv(this.value)">
+      <option value="yield">Sort: Highest yield</option>
+      <option value="streak">Sort: Longest streak</option>
+      <option value="growth">Sort: Dividend growth</option>
+      <option value="safety">Sort: Safety rating</option>
+    </select>
+  </div>
+
+  <!-- TABLE -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+    <table class="div-table" id="divTable">
+      <thead>
+        <tr>
+          <th onclick="sortDiv('name')">Stock</th>
+          <th class="r" onclick="sortDiv('yield')">Yield ↕</th>
+          <th class="r">Annual div.</th>
+          <th class="r">Frequency</th>
+          <th class="r" onclick="sortDiv('streak')">Streak ↕</th>
+          <th class="r">Payout ratio</th>
+          <th class="r">5yr growth</th>
+          <th class="r">Safety</th>
+        </tr>
+      </thead>
+      <tbody id="divBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="disclaimer"><p><strong>Disclaimer:</strong> Dividend data is for informational purposes only. Past dividend payments do not guarantee future payments. Not investment advice.</p></div>
+<footer>
+  <div class="footer-copy">© 2026 NorthStock</div>
+  <div class="footer-links"><a href="index.html">News</a><a href="northstock-portfolio-live.html">Portfolio</a><a href="#">Privacy</a></div>
+</footer>
+
+<script>
+const DIVIDENDS = [
+  {sym:'ENB.TO',name:'Enbridge Inc.',exchange:'TSX',yield:7.82,annual:3.63,freq:'Quarterly',streak:29,payout:141,growth5yr:3.1,safety:'medium',price:58.30,color:'#e03e2d',sector:'Energy'},
+  {sym:'BCE.TO',name:'BCE Inc.',exchange:'TSX',yield:8.41,annual:3.87,freq:'Quarterly',streak:15,payout:168,growth5yr:4.8,safety:'low',price:46.01,color:'#0033a0',sector:'Telecom'},
+  {sym:'RY.TO',name:'Royal Bank of Canada',exchange:'TSX',yield:3.26,annual:5.68,freq:'Quarterly',streak:13,payout:47,growth5yr:8.2,safety:'high',price:174.20,color:'#003168',sector:'Finance'},
+  {sym:'TD.TO',name:'TD Bank',exchange:'TSX',yield:5.18,annual:4.08,freq:'Quarterly',streak:11,payout:89,growth5yr:7.5,safety:'medium',price:78.77,color:'#34b233',sector:'Finance'},
+  {sym:'BMO.TO',name:'Bank of Montreal',exchange:'TSX',yield:5.22,annual:6.20,freq:'Quarterly',streak:13,payout:78,growth5yr:9.1,safety:'high',price:118.80,color:'#0075be',sector:'Finance'},
+  {sym:'T.TO',name:'TELUS Corporation',exchange:'TSX',yield:7.21,annual:1.59,freq:'Quarterly',streak:22,payout:124,growth5yr:5.4,safety:'medium',price:22.05,color:'#4b286d',sector:'Telecom'},
+  {sym:'CNR.TO',name:'CN Rail',exchange:'TSX',yield:2.14,annual:3.38,freq:'Quarterly',streak:27,payout:40,growth5yr:11.2,safety:'high',price:158.10,color:'#d52b1e',sector:'Transport'},
+  {sym:'MFC.TO',name:'Manulife Financial',exchange:'TSX',yield:4.12,annual:1.60,freq:'Quarterly',streak:11,payout:42,growth5yr:9.8,safety:'high',price:38.86,color:'#007744',sector:'Finance'},
+  {sym:'SU.TO',name:'Suncor Energy',exchange:'TSX',yield:4.52,annual:2.28,freq:'Quarterly',streak:5,payout:36,growth5yr:18.4,safety:'high',price:50.44,color:'#e83f2d',sector:'Energy'},
+  {sym:'ABX.TO',name:'Barrick Gold',exchange:'TSX',yield:2.11,annual:0.40,freq:'Quarterly',streak:4,payout:28,growth5yr:8.2,safety:'high',price:18.97,color:'#b8960c',sector:'Materials'},
+  // US Stocks
+  {sym:'KO',name:'Coca-Cola Co.',exchange:'NYSE',yield:3.21,annual:1.94,freq:'Quarterly',streak:63,payout:74,growth5yr:4.1,safety:'high',price:60.46,color:'#f40009',sector:'Consumer'},
+  {sym:'JNJ',name:'Johnson & Johnson',exchange:'NYSE',yield:3.38,annual:4.96,freq:'Quarterly',streak:62,payout:67,growth5yr:5.8,safety:'high',price:146.80,color:'#d4302f',sector:'Healthcare'},
+  {sym:'PEP',name:'PepsiCo Inc.',exchange:'NASDAQ',yield:3.62,annual:5.42,freq:'Quarterly',streak:52,payout:73,growth5yr:6.2,safety:'high',price:149.60,color:'#004c97',sector:'Consumer'},
+  {sym:'PFE',name:'Pfizer Inc.',exchange:'NYSE',yield:6.82,annual:1.68,freq:'Quarterly',streak:14,payout:121,growth5yr:3.4,safety:'low',price:24.64,color:'#00509e',sector:'Healthcare'},
+  {sym:'XOM',name:'Exxon Mobil',exchange:'NYSE',yield:3.72,annual:3.80,freq:'Quarterly',streak:42,payout:47,growth5yr:3.1,safety:'high',price:102.16,color:'#e4002b',sector:'Energy'},
+  {sym:'V',name:'Visa Inc.',exchange:'NYSE',yield:0.78,annual:2.08,freq:'Quarterly',streak:15,payout:21,growth5yr:16.8,safety:'high',price:266.50,color:'#1a1f71',sector:'Finance'},
+  {sym:'SCHD',name:'Schwab Dividend ETF',exchange:'NYSE',yield:3.54,annual:2.76,freq:'Quarterly',streak:14,payout:58,growth5yr:9.2,safety:'high',price:78.00,color:'#00a0dc',sector:'ETF'},
+];
+
+let activeFilter = 'all';
+let divData = [...DIVIDENDS];
+
+function filterDiv(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filters .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if (f === 'all') divData = [...DIVIDENDS];
+  else if (f === 'tsx') divData = DIVIDENDS.filter(d => d.exchange === 'TSX');
+  else if (f === 'us') divData = DIVIDENDS.filter(d => d.exchange !== 'TSX');
+  else if (f === 'high') divData = DIVIDENDS.filter(d => d.yield >= 5);
+  else if (f === 'aristocrat') divData = DIVIDENDS.filter(d => d.streak >= 25);
+  else if (f === 'safe') divData = DIVIDENDS.filter(d => d.safety === 'high');
+  renderDivTable();
+}
+
+function sortDiv(by) {
+  if (by === 'yield') divData.sort((a,b) => b.yield - a.yield);
+  else if (by === 'streak') divData.sort((a,b) => b.streak - a.streak);
+  else if (by === 'growth') divData.sort((a,b) => b.growth5yr - a.growth5yr);
+  else if (by === 'safety') divData.sort((a,b) => {const m={'high':0,'medium':1,'low':2};return m[a.safety]-m[b.safety];});
+  renderDivTable();
+}
+
+function renderDivTable() {
+  const body = document.getElementById('divBody');
+  const maxYield = Math.max(...divData.map(d=>d.yield));
+  body.innerHTML = divData.map(d => {
+    const symShort = d.sym.replace('.TO','').slice(0,4);
+    const safetyLabel = {high:'Safe',medium:'Moderate',low:'Risky'};
+    return `<tr>
+      <td>
+        <div class="sym-cell">
+          <div class="sym-icon" style="background:${d.color}22;color:${d.color}">${symShort}</div>
+          <div><div style="font-size:13px;font-weight:600;font-family:var(--mono)">${d.sym}</div><div class="sym-name">${d.name}</div></div>
+        </div>
+      </td>
+      <td class="r">
+        <div class="yield-bar">
+          <span style="color:var(--green);font-weight:500;font-family:var(--mono)">${d.yield.toFixed(2)}%</span>
+          <div class="ybar-bg"><div class="ybar-fill" style="width:${(d.yield/maxYield*100).toFixed(0)}%"></div></div>
+        </div>
+      </td>
+      <td class="r" style="color:var(--green);font-weight:500">$${d.annual.toFixed(2)}</td>
+      <td class="r"><span class="freq-badge">${d.freq}</span></td>
+      <td class="r"><span class="streak-val">${d.streak} yrs</span></td>
+      <td class="r" style="color:${d.payout>100?'var(--red)':d.payout>80?'var(--gold)':'var(--text2)'}">${d.payout}%</td>
+      <td class="r" style="color:var(--green)">+${d.growth5yr.toFixed(1)}%/yr</td>
+      <td class="r"><span class="safety-badge ${d.safety}">${safetyLabel[d.safety]}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// Build chart
+const ctx = document.getElementById('divChart').getContext('2d');
+const labels = ['Year 1','Year 2','Year 3','Year 4','Year 5','Year 6','Year 7','Year 8','Year 9','Year 10'];
+let v1 = 10000, v2 = 10000;
+const noReinvest = labels.map(() => { const inc = v1 * 0.048; v1 += inc; return parseFloat(v1.toFixed(2)); });
+v2 = 10000;
+const reinvest = labels.map(() => { v2 = v2 * 1.048 * 1.02; return parseFloat(v2.toFixed(2)); });
+new Chart(ctx, {
+  type:'line',
+  data:{
+    labels,
+    datasets:[
+      {label:'With dividend reinvestment',data:reinvest,borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,0.08)',fill:true,tension:0.4,pointRadius:3,borderWidth:2},
+      {label:'Without reinvestment',data:noReinvest,borderColor:'#3b9eff',backgroundColor:'rgba(59,158,255,0.05)',fill:true,tension:0.4,pointRadius:3,borderWidth:2}
+    ]
+  },
+  options:{
+    responsive:true,
+    plugins:{legend:{labels:{color:'#8ea4bc',font:{size:11}}},tooltip:{callbacks:{label:c=>`$${c.parsed.y.toLocaleString('en-CA',{minimumFractionDigits:0,maximumFractionDigits:0})}`}}},
+    scales:{
+      x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#4d6278',font:{size:10}}},
+      y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#4d6278',font:{size:10},callback:v=>'$'+v.toLocaleString()},position:'right'}
+    }
+  }
+});
+
+renderDivTable();
+</script>
+</body>
+</html>
