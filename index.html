@@ -383,16 +383,17 @@
 <nav>
   <div class="logo">North<span>Stock</span><small>Canada & US Markets</small></div>
   <div class="nav-links">
-    <a href="#" class="active">News</a>
-    <a href="#">Earnings Calendar</a>
-    <a href="#">Top Picks</a>
-    <a href="#">Dividends</a>
-    <a href="#">Canadian Stocks</a>
-    <a href="#">US Stocks</a>
+    <a href="index.html" class="active">News</a>
+    <a href="earnings.html">Earnings Calendar</a>
+    <a href="screener.html">Top Picks</a>
+    <a href="dividends.html">Dividends</a>
+    <a href="canadian-stocks.html">Canadian Stocks</a>
+    <a href="us-stocks.html">US Stocks</a>
+    <a href="crypto.html">Crypto</a>
     <a href="northstock-portfolio-live.html" style="color:#3b9eff">My Portfolio</a>
   </div>
   <div class="nav-right">
-    <button class="btn-ghost">Sign in</button>
+    <button class="btn-ghost" onclick="window.location.href='auth.html'">Sign in</button>
   </div>
 </nav>
 
@@ -808,32 +809,41 @@ async function loadRealNews(country = 'us', btn = null) {
   const error   = document.getElementById('real-news-error');
   const config  = COUNTRY_CONFIG[country];
 
-  loading.style.display = 'block';
-  list.style.display    = 'none';
+  loading.style.display = 'none';
   error.style.display   = 'none';
-  list.innerHTML        = '';
+  list.style.display    = 'block';
 
-  // French Canadian — show curated sources directly
+  // French Canadian — show curated sources instantly
   if (country === 'canada-fr') {
-    loading.style.display = 'none';
-    list.style.display    = 'block';
     list.innerHTML = buildFrenchSourcesPanel();
     return;
   }
 
+  // Show fallback sources IMMEDIATELY — no waiting
+  list.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);margin-bottom:14px;background:var(--card);border-radius:8px;padding:10px 14px">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--blue);animation:pulse 1s infinite"></div>
+      Fetching live news... showing trusted sources while loading
+    </div>
+    ${buildFallbackSources(country)}`;
+
+  // Then try to fetch live news in background — replace if successful
   try {
-    // Use allorigins.win proxy to bypass CORS on GitHub Pages
     const finnhubUrl = `https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_KEY}`;
     const proxyUrl   = `https://api.allorigins.win/get?url=${encodeURIComponent(finnhubUrl)}`;
 
-    const r = await fetch(proxyUrl);
+    // 5 second timeout max
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    const r = await fetch(proxyUrl, { signal: controller.signal });
+    clearTimeout(timeout);
+
     const wrapper = await r.json();
-    if (!wrapper.contents) throw new Error('Proxy failed');
+    if (!wrapper.contents) return;
     const articles = JSON.parse(wrapper.contents);
+    if (!articles || articles.length === 0) return;
 
-    if (!articles || articles.length === 0) throw new Error('No articles');
-
-    // Filter by country config
     let filtered = articles.filter(a => {
       if (!a.headline || !a.url) return false;
       const sourceMatch = config.sourcesInclude &&
@@ -841,34 +851,26 @@ async function loadRealNews(country = 'us', btn = null) {
       const keywordMatch = config.keywordsInclude &&
         config.keywordsInclude.some(k =>
           (a.headline || '').toLowerCase().includes(k.toLowerCase()) ||
-          (a.summary  || '').toLowerCase().includes(k.toLowerCase())
-        );
+          (a.summary  || '').toLowerCase().includes(k.toLowerCase()));
       return sourceMatch || keywordMatch;
     });
 
-    // Fallback for Canada EN — show all news if not enough Canadian results
     if (filtered.length < 3 && config.fallback) {
       filtered = articles.filter(a => a.headline && a.url).slice(0, 8);
     }
-
     filtered = filtered.slice(0, 8);
-    if (filtered.length === 0) throw new Error('No matching articles');
+    if (filtered.length === 0) return;
 
+    // Replace fallback with live articles
     list.innerHTML = `
       <div style="font-size:11px;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;gap:6px">
         <span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span>
-        ${filtered.length} articles · ${config.label} · Live from Finnhub News
+        ${filtered.length} live articles · ${config.label} · Finnhub News
       </div>
       ${filtered.map(a => buildNewsCard(a)).join('')}`;
 
-    loading.style.display = 'none';
-    list.style.display    = 'block';
-
   } catch(e) {
-    // If proxy fails too, show curated financial news sources
-    loading.style.display = 'none';
-    list.style.display    = 'block';
-    list.innerHTML = buildFallbackSources(country);
+    // Timeout or error — fallback already showing, nothing to do
   }
 }
 
