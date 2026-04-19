@@ -424,9 +424,9 @@ footer{background:var(--navy);border-top:1px solid var(--border);padding:18px 32
     </div>
 
     <div class="form-group">
-      <label>Current price ($) <span style="color:var(--blue);font-size:11px" id="fetchPriceStatus"></span></label>
-      <input class="form-input" type="number" id="assetPrice" placeholder="Loading live price..." step="any" min="0" oninput="updatePreview()">
-      <div class="hint">Auto-fetched from live data. You can override manually.</div>
+      <label>Current price ($) <span style="color:var(--green);font-size:11px" id="fetchPriceStatus"></span></label>
+      <input class="form-input" type="number" id="assetPrice" placeholder="Auto-fetched — appears when you select a symbol" step="any" min="0" oninput="updatePreview()">
+      <div class="hint">Prix chargé automatiquement depuis Yahoo Finance / Finnhub / CoinGecko. Modifiable manuellement si besoin.</div>
     </div>
 
     <div class="preview" id="preview">
@@ -718,19 +718,20 @@ let priceCache = {};    // symbol → {price, dp, dpPct, ts}
 let refreshTimer = null;
 
 // ═══════════════════════════════════════════════
-// PRICE FETCHING
+// PRICE FETCHING — Multi-source with fallbacks
 // ═══════════════════════════════════════════════
-async function fetchStockPrice(symbol) {
+
+// Source 1 : Finnhub (US stocks, ETFs)
+async function fetchFinnhub(symbol) {
   try {
     const r = await fetch(`${FINNHUB_URL}/quote?symbol=${symbol}&token=${FINNHUB_KEY}`);
     const d = await r.json();
-    if (d.c && d.c > 0) {
-      return { price: d.c, dp: d.d || 0, dpPct: d.dp || 0 };
-    }
+    if (d.c && d.c > 0) return { price: d.c, dp: d.d||0, dpPct: d.dp||0, source:'Finnhub' };
   } catch(e) {}
   return null;
 }
 
+// Source 2 : CoinGecko (crypto — gratuit, no key)
 async function fetchCryptoPrice(symbol) {
   const id = CRYPTO_IDS[symbol.toUpperCase()];
   if (!id) return null;
@@ -740,9 +741,59 @@ async function fetchCryptoPrice(symbol) {
     if (d[id]) {
       const price = d[id].usd;
       const dpPct = d[id].usd_24h_change || 0;
-      return { price, dp: price * dpPct / 100, dpPct };
+      return { price, dp: price * dpPct / 100, dpPct, source:'CoinGecko' };
     }
   } catch(e) {}
+  return null;
+}
+
+// Source 3 : Yahoo Finance via proxy (TSX + tout le reste en fallback)
+async function fetchYahoo(symbol) {
+  // Yahoo utilise le même format .TO pour TSX
+  const yahooSym = encodeURIComponent(symbol);
+  const proxies = [
+    `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSym}?interval=1d&range=1d`,
+    `https://query2.finance.yahoo.com/v8/finance/chart/${yahooSym}?interval=1d&range=1d`,
+  ];
+  for (const url of proxies) {
+    try {
+      const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      const d = await r.json();
+      const meta = d?.chart?.result?.[0]?.meta;
+      if (meta?.regularMarketPrice > 0) {
+        const price  = meta.regularMarketPrice;
+        const prev   = meta.chartPreviousClose || meta.previousClose || price;
+        const dp     = price - prev;
+        const dpPct  = prev > 0 ? (dp / prev) * 100 : 0;
+        return { price, dp, dpPct, source:'Yahoo Finance' };
+      }
+    } catch(e) {}
+  }
+  return null;
+}
+
+// Master fetch — tries best source for each asset type
+async function fetchStockPrice(symbol) {
+  const sym = symbol.toUpperCase();
+  const isTSX = sym.endsWith('.TO') || sym.endsWith('.TSX');
+  const isCrypto = !!CRYPTO_IDS[sym];
+
+  if (isCrypto) return await fetchCryptoPrice(sym);
+
+  // For TSX stocks → try Yahoo first (more reliable for Canadian)
+  if (isTSX) {
+    const yahoo = await fetchYahoo(sym);
+    if (yahoo) return yahoo;
+    const finnhub = await fetchFinnhub(sym);
+    if (finnhub) return finnhub;
+    return null;
+  }
+
+  // For US stocks → try Finnhub first, Yahoo as fallback
+  const finnhub = await fetchFinnhub(sym);
+  if (finnhub) return finnhub;
+  const yahoo = await fetchYahoo(sym);
+  if (yahoo) return yahoo;
   return null;
 }
 
@@ -753,7 +804,7 @@ async function fetchPrice(asset) {
     return priceCache[sym];
   }
   let result = null;
-  if (asset.type === 'Crypto') {
+  if (asset.type === 'Crypto' || CRYPTO_IDS[sym]) {
     result = await fetchCryptoPrice(sym);
   } else {
     result = await fetchStockPrice(sym);
@@ -1217,27 +1268,24 @@ async function fetchAndUpdatePrice(sym, type, statusEl, symSource, fromCache) {
   let data = null;
   if (type === 'Crypto' || CRYPTO_IDS[sym]) {
     data = await fetchCryptoPrice(sym);
-    if (data) symSource.textContent = 'Source: CoinGecko (live)';
   } else {
     data = await fetchStockPrice(sym);
-    if (data) symSource.textContent = 'Source: Finnhub (live)';
   }
   if (data && data.price > 0) {
-    // Update cache
     priceCache[sym.toUpperCase()] = { ...data, ts: Date.now() };
-    // Only overwrite price field if user hasn't manually changed it,
-    // or if we didn't have a cached value already shown
     const currentPrice = parseFloat(document.getElementById('assetPrice').value);
     const isSameAsCached = fromCache && Math.abs(currentPrice - (priceCache[sym]?.price || 0)) < 0.01;
     if (!fromCache || isSameAsCached) {
-      document.getElementById('assetPrice').value = data.price.toFixed(2);
+      document.getElementById('assetPrice').value = data.price.toFixed(data.price > 100 ? 2 : 4);
     }
     statusEl.textContent = `✓ $${data.price.toFixed(2)} (${fmtPct(data.dpPct)} today)`;
     statusEl.style.color = data.dpPct >= 0 ? 'var(--green)' : 'var(--red)';
+    if (symSource) symSource.textContent = `Source: ${data.source || 'Live market data'}`;
     updatePreview();
   } else if (!fromCache) {
-    statusEl.textContent = 'Not found — enter price manually';
-    statusEl.style.color = 'var(--text3)';
+    statusEl.textContent = '⚠ Price unavailable — market may be closed or symbol not found. Enter manually.';
+    statusEl.style.color = 'var(--gold)';
+    if (symSource) symSource.textContent = 'Tried Finnhub + Yahoo Finance — no data returned';
   }
 }
 
