@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="NorthStock — AI-curated stock market news, earnings calendar, and high-potential stock picks for Canadian and US investors. Free daily updates.">
+<meta name="keywords" content="stock market, TSX, NYSE, NASDAQ, Canadian stocks, earnings calendar, dividend stocks, stock picks, investing Canada">
+<meta property="og:title" content="NorthStock — Canada & US Stock Market Intelligence">
+<meta property="og:description" content="AI-curated news, earnings dates, and high-potential stocks — updated daily, free to access.">
+<title>NorthStock — Canada & US Stock Market Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #06111f;
+    --navy2: #0d1f3c;
+    --navy3: #112244;
+    --blue: #3b9eff;
+    --blue2: #1a7fe0;
+    --green: #22c55e;
+    --red: #ef4444;
+    --gold: #f59e0b;
+    --text: #f0f4f8;
+    --text2: #8ea4bc;
+    --text3: #4d6278;
+    --border: rgba(255,255,255,0.07);
+    --card: rgba(255,255,255,0.04);
+    --card2: rgba(255,255,255,0.07);
+    --radius: 10px;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--navy); color: var(--text); line-height: 1.6; }
+  a { text-decoration: none; color: inherit; }
+
+  /* TICKER BAR */
+  .ticker-bar {
+    background: var(--navy2);
+    border-bottom: 1px solid var(--border);
+    padding: 7px 0;
+    overflow: hidden;
+    position: relative;
+  }
+  .ticker-track {
+    display: flex;
+    gap: 40px;
+    animation: ticker 35s linear infinite;
+    white-space: nowrap;
+  }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .ticker-item { display: flex; gap: 8px; align-items: center; font-size: 12px; font-family: var(--mono); }
+  .ticker-sym { color: var(--text2); font-weight: 500; }
+  .ticker-price { color: var(--text); }
+  .ticker-chg.up { color: var(--green); }
+  .ticker-chg.dn { color: var(--red); }
+  .ticker-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--border); }
+
+  /* NAV */
+  nav {
+    background: var(--navy2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 58px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { font-size: 20px; font-weight: 600; letter-spacing: -0.5px; }
+  .logo span { color: var(--blue); }
+  .logo small { font-size: 10px; font-weight: 400; color: var(--text3); margin-left: 6px; vertical-align: middle; }
+  .nav-links { display: flex; gap: 4px; }
+  .nav-links a {
+    color: var(--text2);
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: all .15s;
+  }
+  .nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--card2); }
+  .nav-right { display: flex; gap: 10px; align-items: center; }
+  .btn-ghost { font-size: 13px; padding: 7px 14px; border-radius: 7px; border: 1px solid var(--border); color: var(--text2); cursor: pointer; background: transparent; transition: all .15s; font-family: var(--font); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--text3); }
+  .btn-primary { font-size: 13px; padding: 7px 16px; border-radius: 7px; border: none; background: var(--blue); color: #fff; cursor: pointer; font-family: var(--font); font-weight: 500; transition: background .15s; }
+  .btn-primary:hover { background: var(--blue2); }
+
+  /* HERO */
+  .hero {
+    background: var(--navy2);
+    border-bottom: 1px solid var(--border);
+    padding: 48px 40px 36px;
+  }
+  .hero-inner { max-width: 1100px; margin: 0 auto; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(59,158,255,0.12); border: 1px solid rgba(59,158,255,0.25);
+    color: var(--blue); font-size: 11px; font-weight: 500;
+    padding: 4px 10px; border-radius: 20px; margin-bottom: 16px;
+  }
+  .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+  .hero h1 { font-size: 36px; font-weight: 600; line-height: 1.2; margin-bottom: 12px; letter-spacing: -0.5px; }
+  .hero h1 em { color: var(--blue); font-style: normal; }
+  .hero p { color: var(--text2); font-size: 15px; max-width: 560px; margin-bottom: 28px; }
+  .hero-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+  .hstat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    min-width: 140px;
+  }
+  .hstat-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .05em; }
+  .hstat-val { font-size: 22px; font-weight: 600; font-family: var(--mono); }
+  .hstat-val.green { color: var(--green); }
+  .hstat-val.red { color: var(--red); }
+  .hstat-val.gold { color: var(--gold); }
+  .hstat-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* MAIN LAYOUT */
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 40px; display: grid; grid-template-columns: 1fr 280px; gap: 24px; }
+
+  /* SECTION HEADERS */
+  .sec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .sec-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; }
+  .sec-link { font-size: 12px; color: var(--blue); }
+
+  /* ARTICLE CARDS */
+  .article-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .article-card:hover { border-color: rgba(255,255,255,0.15); background: var(--card2); }
+  .article-card.featured { border-color: rgba(59,158,255,0.3); }
+  .art-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+  .badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: .04em; }
+  .badge.hot { background: rgba(245,158,11,0.15); color: var(--gold); border: 1px solid rgba(245,158,11,0.3); }
+  .badge.new { background: rgba(59,158,255,0.12); color: var(--blue); border: 1px solid rgba(59,158,255,0.25); }
+  .badge.earn { background: rgba(34,197,94,0.1); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+  .badge.div { background: rgba(167,139,250,0.1); color: #a78bfa; border: 1px solid rgba(167,139,250,0.25); }
+  .badge.warn { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+  .art-ticker { font-size: 11px; font-weight: 600; color: var(--blue); background: rgba(59,158,255,0.1); padding: 2px 7px; border-radius: 4px; font-family: var(--mono); }
+  .art-time { font-size: 11px; color: var(--text3); margin-left: auto; }
+  .art-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 6px; line-height: 1.45; }
+  .art-summary { font-size: 12px; color: var(--text2); line-height: 1.6; }
+  .art-footer { display: flex; gap: 16px; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
+  .art-tag { font-size: 11px; color: var(--text3); }
+  .art-read { font-size: 11px; color: var(--blue); margin-left: auto; }
+
+  /* SIDEBAR CARDS */
+  .sidebar-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  /* PREMIUM CARD */
+  .premium-card {
+    background: linear-gradient(135deg, rgba(59,158,255,0.15), rgba(59,158,255,0.05));
+    border: 1px solid rgba(59,158,255,0.3);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .premium-card h3 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .premium-card p { font-size: 12px; color: var(--text2); margin-bottom: 14px; line-height: 1.5; }
+  .premium-features { list-style: none; margin-bottom: 14px; }
+  .premium-features li { font-size: 12px; color: var(--text2); padding: 3px 0; }
+  .premium-features li::before { content: "✓ "; color: var(--green); font-weight: 600; }
+  .premium-price { font-size: 11px; color: var(--text3); margin-top: 8px; text-align: center; }
+
+  /* EARNINGS TABLE */
+  .earn-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .earn-row:last-child { border-bottom: none; }
+  .earn-left { }
+  .earn-co { font-size: 13px; font-weight: 500; color: var(--text); }
+  .earn-sym { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+  .earn-right { text-align: right; }
+  .earn-date { font-size: 12px; color: var(--text2); }
+  .earn-est { font-size: 11px; color: #4ade80; }
+
+  /* MARKET SNAPSHOT */
+  .mrow { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .mrow:last-child { border-bottom: none; }
+  .mname { font-size: 12px; color: var(--text2); }
+  .mval { font-size: 12px; font-weight: 500; font-family: var(--mono); }
+  .mval.up { color: var(--green); }
+  .mval.dn { color: var(--red); }
+
+  /* WATCHLIST */
+  .wrow { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); }
+  .wrow:last-child { border-bottom: none; }
+  .wsym { font-size: 13px; font-weight: 600; color: var(--text); font-family: var(--mono); }
+  .wname { font-size: 11px; color: var(--text3); }
+  .wprice { font-size: 13px; font-weight: 500; text-align: right; }
+  .wchg { font-size: 11px; text-align: right; }
+  .wchg.up { color: var(--green); }
+  .wchg.dn { color: var(--red); }
+
+  /* SECTORS */
+  .sector-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 24px; }
+  .sector-pill {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .sector-pill:hover { border-color: var(--text3); }
+  .sector-name { font-size: 12px; font-weight: 500; color: var(--text); }
+  .sector-chg { font-size: 11px; font-family: var(--mono); }
+  .sector-chg.up { color: var(--green); }
+  .sector-chg.dn { color: var(--red); }
+
+  /* NEWSLETTER */
+  .newsletter {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin: 0 0 24px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+  .nl-text h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .nl-text p { font-size: 13px; color: var(--text2); }
+  .nl-form { display: flex; gap: 8px; flex-shrink: 0; }
+  .nl-input {
+    background: var(--navy);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 14px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: var(--font);
+    width: 220px;
+  }
+  .nl-input::placeholder { color: var(--text3); }
+  .nl-input:focus { outline: none; border-color: var(--blue); }
+
+  /* DISCLAIMER */
+  .disclaimer {
+    background: var(--navy2);
+    border-top: 1px solid var(--border);
+    padding: 16px 40px;
+  }
+  .disclaimer p { font-size: 11px; color: var(--text3); max-width: 1100px; margin: 0 auto; line-height: 1.6; }
+
+  /* FOOTER */
+  footer {
+    background: var(--navy);
+    border-top: 1px solid var(--border);
+    padding: 32px 40px;
+  }
+  .footer-inner { max-width: 1100px; margin: 0 auto; }
+  .footer-top { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 32px; margin-bottom: 32px; }
+  .footer-brand p { font-size: 13px; color: var(--text3); margin-top: 8px; max-width: 260px; line-height: 1.6; }
+  .footer-col h4 { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 12px; text-transform: uppercase; letter-spacing: .06em; }
+  .footer-col a { display: block; font-size: 13px; color: var(--text3); margin-bottom: 8px; transition: color .15s; }
+  .footer-col a:hover { color: var(--text2); }
+  .footer-bottom { border-top: 1px solid var(--border); padding-top: 20px; display: flex; justify-content: space-between; align-items: center; }
+  .footer-copy { font-size: 12px; color: var(--text3); }
+  .footer-social { display: flex; gap: 12px; }
+  .social-btn { font-size: 12px; color: var(--text3); padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px; transition: all .15s; }
+  .social-btn:hover { color: var(--text2); border-color: var(--text3); }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .container { grid-template-columns: 1fr; padding: 20px; }
+    nav { padding: 0 20px; }
+    .nav-links { display: none; }
+    .hero { padding: 32px 20px; }
+    .hero h1 { font-size: 26px; }
+    .footer-top { grid-template-columns: 1fr 1fr; }
+    .newsletter { flex-direction: column; }
+    .nl-form { width: 100%; }
+    .nl-input { flex: 1; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TICKER BAR -->
+<div class="ticker-bar">
+  <div class="ticker-track">
+    <!-- Set 1 -->
+    <div class="ticker-item"><span class="ticker-sym">S&P 500</span><span class="ticker-price">5,312.40</span><span class="ticker-chg up">▲ +0.42%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">TSX</span><span class="ticker-price">24,188.30</span><span class="ticker-chg up">▲ +0.28%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">NASDAQ</span><span class="ticker-price">16,540.20</span><span class="ticker-chg dn">▼ -0.11%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">NVDA</span><span class="ticker-price">$892.40</span><span class="ticker-chg up">▲ +4.21%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">AAPL</span><span class="ticker-price">$212.50</span><span class="ticker-chg up">▲ +0.88%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">SHOP.TO</span><span class="ticker-price">$118.40</span><span class="ticker-chg up">▲ +1.35%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">RY.TO</span><span class="ticker-price">$174.20</span><span class="ticker-chg up">▲ +0.62%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">USD/CAD</span><span class="ticker-price">1.3840</span><span class="ticker-chg dn">▼ -0.06%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">Oil WTI</span><span class="ticker-price">$82.40</span><span class="ticker-chg up">▲ +1.20%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">Gold</span><span class="ticker-price">$3,320</span><span class="ticker-chg up">▲ +0.80%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">MSFT</span><span class="ticker-price">$418.20</span><span class="ticker-chg up">▲ +1.10%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">INTC</span><span class="ticker-price">$21.80</span><span class="ticker-chg dn">▼ -3.10%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">ENB.TO</span><span class="ticker-price">$58.30</span><span class="ticker-chg up">▲ +0.44%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">BTC</span><span class="ticker-price">$84,210</span><span class="ticker-chg up">▲ +2.30%</span></div>
+    <div class="ticker-dot"></div>
+    <!-- Set 2 (duplicate for seamless loop) -->
+    <div class="ticker-item"><span class="ticker-sym">S&P 500</span><span class="ticker-price">5,312.40</span><span class="ticker-chg up">▲ +0.42%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">TSX</span><span class="ticker-price">24,188.30</span><span class="ticker-chg up">▲ +0.28%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">NASDAQ</span><span class="ticker-price">16,540.20</span><span class="ticker-chg dn">▼ -0.11%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">NVDA</span><span class="ticker-price">$892.40</span><span class="ticker-chg up">▲ +4.21%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">AAPL</span><span class="ticker-price">$212.50</span><span class="ticker-chg up">▲ +0.88%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">SHOP.TO</span><span class="ticker-price">$118.40</span><span class="ticker-chg up">▲ +1.35%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">RY.TO</span><span class="ticker-price">$174.20</span><span class="ticker-chg up">▲ +0.62%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">USD/CAD</span><span class="ticker-price">1.3840</span><span class="ticker-chg dn">▼ -0.06%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">Oil WTI</span><span class="ticker-price">$82.40</span><span class="ticker-chg up">▲ +1.20%</span></div>
+    <div class="ticker-dot"></div>
+    <div class="ticker-item"><span class="ticker-sym">Gold</span><span class="ticker-price">$3,320</span><span class="ticker-chg up">▲ +0.80%</span></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">North<span>Stock</span><small>Canada & US Markets</small></div>
+  <div class="nav-links">
+    <a href="#" class="active">News</a>
+    <a href="#">Earnings Calendar</a>
+    <a href="#">Top Picks</a>
+    <a href="#">Dividends</a>
+    <a href="#">Canadian Stocks</a>
+    <a href="#">US Stocks</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn-ghost">Sign in</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge"><span class="hero-badge-dot"></span> Live market data · Updated daily</div>
+    <h1>Stock market intelligence for<br><em>Canadian & US investors</em></h1>
+    <p>AI-curated news, earnings dates, and high-potential stock picks — free to access, covering TSX, NYSE, and NASDAQ every trading day.</p>
+    <div class="hero-stats">
+      <div class="hstat">
+        <div class="hstat-label">Articles today</div>
+        <div class="hstat-val">24</div>
+        <div class="hstat-sub">across 6 sectors</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-label">Earnings this week</div>
+        <div class="hstat-val">38</div>
+        <div class="hstat-sub">TSX + NYSE + NASDAQ</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-label">Top mover today</div>
+        <div class="hstat-val green">NVDA +4.2%</div>
+        <div class="hstat-sub">AI demand surge</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-label">Biggest drop</div>
+        <div class="hstat-val red">INTC -3.1%</div>
+        <div class="hstat-sub">guidance cut</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-label">Gold</div>
+        <div class="hstat-val gold">$3,320</div>
+        <div class="hstat-sub">▲ +0.80% today</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div style="max-width:1180px;margin:0 auto;padding:0 40px;">
+
+  <!-- NEWSLETTER STRIP -->
+  <div class="newsletter" style="margin-top:28px;">
+    <div class="nl-text">
+      <h3>Get the daily briefing</h3>
+      <p>Top 5 market moves + upcoming earnings — every morning before market open.</p>
+    </div>
+    <div class="nl-form">
+      <input class="nl-input" type="email" placeholder="your@email.com">
+      <button class="btn-primary">Subscribe free</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="container">
+
+  <!-- MAIN COLUMN -->
+  <div class="main">
+
+    <!-- SECTOR FILTERS -->
+    <div class="sec-header">
+      <div class="sec-title">Browse by sector</div>
+    </div>
+    <div class="sector-grid" style="margin-bottom:24px;">
+      <div class="sector-pill"><div class="sector-name">Technology</div><div class="sector-chg up">▲ +1.24%</div></div>
+      <div class="sector-pill"><div class="sector-name">Financials</div><div class="sector-chg up">▲ +0.58%</div></div>
+      <div class="sector-pill"><div class="sector-name">Energy</div><div class="sector-chg up">▲ +0.92%</div></div>
+      <div class="sector-pill"><div class="sector-name">Healthcare</div><div class="sector-chg dn">▼ -0.31%</div></div>
+      <div class="sector-pill"><div class="sector-name">Industrials</div><div class="sector-chg up">▲ +0.15%</div></div>
+      <div class="sector-pill"><div class="sector-name">Consumer</div><div class="sector-chg dn">▼ -0.44%</div></div>
+    </div>
+
+    <!-- ARTICLES -->
+    <div class="sec-header">
+      <div class="sec-title">Latest news & analysis</div>
+      <a href="#" class="sec-link">View all →</a>
+    </div>
+
+    <div class="article-card featured">
+      <div class="art-meta">
+        <span class="badge hot">Trending</span>
+        <span class="art-ticker">NVDA</span>
+        <span class="art-time">2h ago</span>
+      </div>
+      <div class="art-title">Nvidia smashes expectations — is the AI rally just getting started?</div>
+      <div class="art-summary">After a blowout quarter driven by data center demand, analysts across Wall Street are raising price targets aggressively. But is the valuation sustainable? We break down what the numbers actually mean for retail investors sitting on gains — or thinking of getting in now.</div>
+      <div class="art-footer">
+        <span class="art-tag">Technology · AI · Earnings</span>
+        <span class="art-read">Read more →</span>
+      </div>
+    </div>
+
+    <div class="article-card">
+      <div class="art-meta">
+        <span class="badge earn">Earnings</span>
+        <span class="art-ticker">RY.TO</span>
+        <span class="art-time">4h ago</span>
+      </div>
+      <div class="art-title">RBC reports Q2 — what Canadian investors need to know before market open</div>
+      <div class="art-summary">Royal Bank beats EPS estimates by $0.08. Dividend growth remains on track. Full breakdown of provisions, loan growth outlook, and what it means for your TFSA.</div>
+      <div class="art-footer">
+        <span class="art-tag">Canadian Banks · TSX · Dividends</span>
+        <span class="art-read">Read more →</span>
+      </div>
+    </div>
+
+    <div class="article-card">
+      <div class="art-meta">
+        <span class="badge new">New</span>
+        <span class="art-ticker">AAPL</span>
+        <span class="art-time">5h ago</span>
+      </div>
+      <div class="art-title">Apple earnings confirmed May 1 — 3 things to watch in this report</div>
+      <div class="art-summary">Services revenue, iPhone demand in China, and AI feature adoption will be the key metrics. We break down analyst consensus vs. what the market is actually pricing in — and the surprise factor that could move the stock either way.</div>
+      <div class="art-footer">
+        <span class="art-tag">Technology · NASDAQ · Earnings Preview</span>
+        <span class="art-read">Read more →</span>
+      </div>
+    </div>
+
+    <div class="article-card">
+      <div class="art-meta">
+        <span class="badge div">Dividends</span>
+        <span class="art-ticker">ENB.TO</span>
+        <span class="art-time">7h ago</span>
+      </div>
+      <div class="art-title">Enbridge raises dividend for the 29th consecutive year — the TSX income stock that won't quit</div>
+      <div class="art-summary">For nearly three decades running, Enbridge keeps hiking its payout. We look at sustainability, yield vs. peers, pipeline growth, and whether it still belongs as a core TFSA or RRSP holding in 2026.</div>
+      <div class="art-footer">
+        <span class="art-tag">TSX · Energy · Income Investing</span>
+        <span class="art-read">Read more →</span>
+      </div>
+    </div>
+
+    <div class="article-card">
+      <div class="art-meta">
+        <span class="badge warn">Watch</span>
+        <span class="art-ticker">INTC</span>
+        <span class="art-time">8h ago</span>
+      </div>
+      <div class="art-title">Intel drops 3% after cutting revenue guidance — is this a buying opportunity or a falling knife?</div>
+      <div class="art-summary">Intel's struggles with AI chip competition continue. We examine the valuation thesis, turnaround timeline, and why some contrarian investors are starting to take notice — while others are running for the exits.</div>
+      <div class="art-footer">
+        <span class="art-tag">Semiconductors · NASDAQ · Value Play</span>
+        <span class="art-read">Read more →</span>
+      </div>
+    </div>
+
+    <div class="article-card">
+      <div class="art-meta">
+        <span class="badge hot">Top Pick</span>
+        <span class="art-ticker">SHOP.TO</span>
+        <span class="art-time">10h ago</span>
+      </div>
+      <div class="art-title">Shopify's international expansion — why this Canadian champion may have more upside than you think</div>
+      <div class="art-summary">After a massive restructuring and refocus on growth, Shopify is posting impressive numbers outside North America. Is the TSX darling worth adding to your portfolio at current levels? Our full analysis.</div>
+      <div class="art-footer">
+        <span class="art-tag">TSX · E-Commerce · Growth Stocks</span>
+        <span class="art-read">Read more →</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- EARNINGS CALENDAR -->
+    <div class="sidebar-card">
+      <div class="sec-header">
+        <div class="sec-title">Upcoming earnings</div>
+        <a href="#" class="sec-link">Full calendar →</a>
+      </div>
+      <div class="earn-row">
+        <div class="earn-left"><div class="earn-co">Apple</div><div class="earn-sym">AAPL · NASDAQ</div></div>
+        <div class="earn-right"><div class="earn-date">May 1</div><div class="earn-est">EPS est. $1.62</div></div>
+      </div>
+      <div class="earn-row">
+        <div class="earn-left"><div class="earn-co">Shopify</div><div class="earn-sym">SHOP.TO · TSX</div></div>
+        <div class="earn-right"><div class="earn-date">Apr 29</div><div class="earn-est">EPS est. $0.21</div></div>
+      </div>
+      <div class="earn-row">
+        <div class="earn-left"><div class="earn-co">Amazon</div><div class="earn-sym">AMZN · NASDAQ</div></div>
+        <div class="earn-right"><div class="earn-date">May 1</div><div class="earn-est">EPS est. $1.36</div></div>
+      </div>
+      <div class="earn-row">
+        <div class="earn-left"><div class="earn-co">TD Bank</div><div class="earn-sym">TD.TO · TSX</div></div>
+        <div class="earn-right"><div class="earn-date">May 6</div><div class="earn-est">EPS est. $1.88</div></div>
+      </div>
+      <div class="earn-row">
+        <div class="earn-left"><div class="earn-co">Microsoft</div><div class="earn-sym">MSFT · NASDAQ</div></div>
+        <div class="earn-right"><div class="earn-date">May 7</div><div class="earn-est">EPS est. $3.22</div></div>
+      </div>
+      <div class="earn-row">
+        <div class="earn-left"><div class="earn-co">CNQ</div><div class="earn-sym">CNQ.TO · TSX</div></div>
+        <div class="earn-right"><div class="earn-date">May 8</div><div class="earn-est">EPS est. $1.14</div></div>
+      </div>
+    </div>
+
+    <!-- MARKET SNAPSHOT -->
+    <div class="sidebar-card">
+      <div class="sec-header">
+        <div class="sec-title">Markets snapshot</div>
+      </div>
+      <div class="mrow"><span class="mname">S&P 500</span><span class="mval up">5,312 ▲ +0.42%</span></div>
+      <div class="mrow"><span class="mname">TSX Composite</span><span class="mval up">24,188 ▲ +0.28%</span></div>
+      <div class="mrow"><span class="mname">NASDAQ</span><span class="mval dn">16,540 ▼ -0.11%</span></div>
+      <div class="mrow"><span class="mname">Dow Jones</span><span class="mval up">39,420 ▲ +0.30%</span></div>
+      <div class="mrow"><span class="mname">Oil (WTI)</span><span class="mval up">$82.40 ▲ +1.20%</span></div>
+      <div class="mrow"><span class="mname">Gold</span><span class="mval up">$3,320 ▲ +0.80%</span></div>
+      <div class="mrow"><span class="mname">USD/CAD</span><span class="mval dn">1.384 ▼ -0.06%</span></div>
+      <div class="mrow"><span class="mname">Bitcoin</span><span class="mval up">$84,210 ▲ +2.30%</span></div>
+    </div>
+
+    <!-- WATCHLIST -->
+    <div class="sidebar-card">
+      <div class="sec-header">
+        <div class="sec-title">Popular stocks</div>
+        <a href="#" class="sec-link">See all →</a>
+      </div>
+      <div class="wrow">
+        <div><div class="wsym">NVDA</div><div class="wname">Nvidia Corp</div></div>
+        <div><div class="wprice">$892.40</div><div class="wchg up">▲ +4.21%</div></div>
+      </div>
+      <div class="wrow">
+        <div><div class="wsym">SHOP.TO</div><div class="wname">Shopify Inc</div></div>
+        <div><div class="wprice">$118.40</div><div class="wchg up">▲ +1.35%</div></div>
+      </div>
+      <div class="wrow">
+        <div><div class="wsym">MSFT</div><div class="wname">Microsoft</div></div>
+        <div><div class="wprice">$418.20</div><div class="wchg up">▲ +1.10%</div></div>
+      </div>
+      <div class="wrow">
+        <div><div class="wsym">RY.TO</div><div class="wname">Royal Bank</div></div>
+        <div><div class="wprice">$174.20</div><div class="wchg up">▲ +0.62%</div></div>
+      </div>
+      <div class="wrow">
+        <div><div class="wsym">AMZN</div><div class="wname">Amazon</div></div>
+        <div><div class="wprice">$195.80</div><div class="wchg up">▲ +0.75%</div></div>
+      </div>
+      <div class="wrow">
+        <div><div class="wsym">ENB.TO</div><div class="wname">Enbridge</div></div>
+        <div><div class="wprice">$58.30</div><div class="wchg up">▲ +0.44%</div></div>
+      </div>
+      <div class="wrow">
+        <div><div class="wsym">INTC</div><div class="wname">Intel Corp</div></div>
+        <div><div class="wprice">$21.80</div><div class="wchg dn">▼ -3.10%</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- DISCLAIMER -->
+<div class="disclaimer">
+  <p><strong>Disclaimer:</strong> NorthStock provides financial news and information for educational and informational purposes only. Nothing published on this website constitutes investment advice, a solicitation, or a recommendation to buy or sell any security. Always conduct your own due diligence and consult a licensed financial advisor before making any investment decisions. Past performance does not guarantee future results. NorthStock is not registered as an investment advisor with any Canadian or US regulatory authority.</p>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="logo">North<span>Stock</span></div>
+        <p>Free daily stock market intelligence for Canadian and US investors. Covering TSX, NYSE, and NASDAQ — powered by AI curation.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Markets</h4>
+        <a href="#">TSX Stocks</a>
+        <a href="#">US Stocks</a>
+        <a href="#">Earnings Calendar</a>
+        <a href="#">Dividend Tracker</a>
+        <a href="#">Top Movers</a>
+      </div>
+      <div class="footer-col">
+        <h4>Content</h4>
+        <a href="#">News & Analysis</a>
+        <a href="#">Stock Picks</a>
+        <a href="#">TFSA & RRSP</a>
+        <a href="#">Beginner Guides</a>
+        <a href="#">Newsletter</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="#">About NorthStock</a>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Use</a>
+        <a href="#">Contact</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2026 NorthStock. All rights reserved. Market data for informational use only.</div>
+      <div class="footer-social">
+        <a href="#" class="social-btn">Twitter / X</a>
+        <a href="#" class="social-btn">Reddit</a>
+        <a href="#" class="social-btn">LinkedIn</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
