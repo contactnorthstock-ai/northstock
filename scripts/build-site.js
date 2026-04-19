@@ -179,7 +179,8 @@ function main() {
     'canadian-stocks.html',
     'us-stocks.html',
     'crypto.html',
-  ];
+    'popular-stocks.html',
+];
   pages.forEach(page => {
     const src = path.join(process.cwd(), page);
     if (fs.existsSync(src)) {
