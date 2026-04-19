@@ -1,0 +1,42 @@
+name: NorthStock Daily Update — 5h AM Montreal
+
+on:
+  schedule:
+    - cron: '0 10 * * 1-5'
+    - cron: '0 11 * * 6,0'
+  workflow_dispatch:
+
+jobs:
+  generate-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate daily content
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: node scripts/generate-daily.js
+
+      - name: Build site
+        run: node scripts/build-site.js
+
+      - name: Deploy to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: npx netlify-cli deploy --prod --dir=dist
+
+      - name: Confirm deployment
+        run: echo "✅ NorthStock mis à jour à $(date -u '+%Y-%m-%d %H:%M UTC')"
