@@ -244,7 +244,7 @@ footer{background:var(--navy);border-top:1px solid var(--border);padding:18px 32
   <div class="nav-right">
     <div class="live-dot"></div>
     <span class="live-label">Live prices</span>
-    <button class="btn-ghost">Sign in</button>
+    <button class="btn-ghost" onclick="window.location.href='auth.html'">Sign in</button>
   </div>
 </nav>
 
@@ -718,7 +718,7 @@ let priceCache = {};    // symbol → {price, dp, dpPct, ts}
 let refreshTimer = null;
 
 // ═══════════════════════════════════════════════
-// PRICE FETCHING — Multi-source with fallbacks
+// PRICE FETCHING — Finnhub + CoinGecko + Proxy TSX
 // ═══════════════════════════════════════════════
 
 // Source 1 : Finnhub (US stocks, ETFs)
@@ -731,7 +731,7 @@ async function fetchFinnhub(symbol) {
   return null;
 }
 
-// Source 2 : CoinGecko (crypto — gratuit, no key)
+// Source 2 : CoinGecko (crypto — gratuit, no key, no CORS issues)
 async function fetchCryptoPrice(symbol) {
   const id = CRYPTO_IDS[symbol.toUpperCase()];
   if (!id) return null;
@@ -747,32 +747,28 @@ async function fetchCryptoPrice(symbol) {
   return null;
 }
 
-// Source 3 : Yahoo Finance via proxy (TSX + tout le reste en fallback)
-async function fetchYahoo(symbol) {
-  // Yahoo utilise le même format .TO pour TSX
-  const yahooSym = encodeURIComponent(symbol);
-  const proxies = [
-    `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSym}?interval=1d&range=1d`,
-    `https://query2.finance.yahoo.com/v8/finance/chart/${yahooSym}?interval=1d&range=1d`,
-  ];
-  for (const url of proxies) {
-    try {
-      const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
-      const d = await r.json();
-      const meta = d?.chart?.result?.[0]?.meta;
-      if (meta?.regularMarketPrice > 0) {
-        const price  = meta.regularMarketPrice;
-        const prev   = meta.chartPreviousClose || meta.previousClose || price;
-        const dp     = price - prev;
-        const dpPct  = prev > 0 ? (dp / prev) * 100 : 0;
-        return { price, dp, dpPct, source:'Yahoo Finance' };
-      }
-    } catch(e) {}
-  }
+// Source 3 : Yahoo Finance via AllOrigins CORS proxy (for TSX stocks)
+async function fetchYahooProxy(symbol) {
+  try {
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
+    const r = await fetch(proxyUrl);
+    const wrapper = await r.json();
+    if (!wrapper.contents) return null;
+    const d = JSON.parse(wrapper.contents);
+    const meta = d?.chart?.result?.[0]?.meta;
+    if (meta?.regularMarketPrice > 0) {
+      const price = meta.regularMarketPrice;
+      const prev  = meta.chartPreviousClose || meta.previousClose || price;
+      const dp    = price - prev;
+      const dpPct = prev > 0 ? (dp / prev) * 100 : 0;
+      return { price, dp, dpPct, source:'Yahoo Finance' };
+    }
+  } catch(e) {}
   return null;
 }
 
-// Master fetch — tries best source for each asset type
+// Master fetch — best source per asset type
 async function fetchStockPrice(symbol) {
   const sym = symbol.toUpperCase();
   const isTSX = sym.endsWith('.TO') || sym.endsWith('.TSX');
@@ -780,20 +776,18 @@ async function fetchStockPrice(symbol) {
 
   if (isCrypto) return await fetchCryptoPrice(sym);
 
-  // For TSX stocks → try Yahoo first (more reliable for Canadian)
+  // TSX stocks → Finnhub first, then Yahoo via proxy
   if (isTSX) {
-    const yahoo = await fetchYahoo(sym);
-    if (yahoo) return yahoo;
     const finnhub = await fetchFinnhub(sym);
     if (finnhub) return finnhub;
+    const yahoo = await fetchYahooProxy(sym);
+    if (yahoo) return yahoo;
     return null;
   }
 
-  // For US stocks → try Finnhub first, Yahoo as fallback
+  // US stocks → Finnhub only (no CORS issues)
   const finnhub = await fetchFinnhub(sym);
   if (finnhub) return finnhub;
-  const yahoo = await fetchYahoo(sym);
-  if (yahoo) return yahoo;
   return null;
 }
 
