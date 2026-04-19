@@ -169,7 +169,15 @@ function main() {
     fs.copyFileSync(portfolioSrc, path.join(distDir, 'northstock-portfolio-live.html'));
     console.log('✅ Portfolio page copied');
   }
-
+// Copy all additional pages
+const pages = ['earnings.html','dividends.html','screener.html','auth.html'];
+pages.forEach(page => {
+  const src = path.join(process.cwd(), page);
+  if (fs.existsSync(src)) {
+    fs.copyFileSync(src, path.join(distDir, page));
+    console.log(`✅ ${page} copied`);
+  }
+});
   console.log(`🚀 Site ready in /dist — ${articles.length} articles, live market data`);
 }
 
