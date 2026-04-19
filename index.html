@@ -719,19 +719,19 @@
       </div>
       <div class="footer-col">
         <h4>Markets</h4>
-        <a href="#">TSX Stocks</a>
-        <a href="#">US Stocks</a>
-        <a href="#">Earnings Calendar</a>
-        <a href="#">Dividend Tracker</a>
-        <a href="#">Top Movers</a>
+        <a href="screener.html?filter=tsx">TSX Stocks</a>
+        <a href="screener.html">US Stocks</a>
+        <a href="earnings.html">Earnings Calendar</a>
+        <a href="dividends.html">Dividend Tracker</a>
+        <a href="screener.html">Top Movers</a>
       </div>
       <div class="footer-col">
         <h4>Content</h4>
-        <a href="#">News & Analysis</a>
-        <a href="#">Stock Picks</a>
-        <a href="#">TFSA & RRSP</a>
-        <a href="#">Beginner Guides</a>
-        <a href="#">Newsletter</a>
+        <a href="index.html">News & Analysis</a>
+        <a href="screener.html">Stock Picks</a>
+        <a href="dividends.html">Dividends</a>
+        <a href="northstock-portfolio-live.html">My Portfolio</a>
+        <a href="auth.html">Sign in</a>
       </div>
       <div class="footer-col">
         <h4>Company</h4>
@@ -798,7 +798,6 @@ const COUNTRY_CONFIG = {
 
 // ── FETCH REAL NEWS FROM FINNHUB ───────────────
 async function loadRealNews(country = 'us', btn = null) {
-  // Update active button
   if (btn) {
     document.querySelectorAll('.country-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
@@ -814,7 +813,7 @@ async function loadRealNews(country = 'us', btn = null) {
   error.style.display   = 'none';
   list.innerHTML        = '';
 
-  // Special handling for French Canadian
+  // French Canadian — show curated sources directly
   if (country === 'canada-fr') {
     loading.style.display = 'none';
     list.style.display    = 'block';
@@ -823,42 +822,42 @@ async function loadRealNews(country = 'us', btn = null) {
   }
 
   try {
-    const r = await fetch(`https://finnhub.io/api/v1/news?category=${config.category}&token=${FINNHUB_KEY}`);
-    const articles = await r.json();
+    // Use allorigins.win proxy to bypass CORS on GitHub Pages
+    const finnhubUrl = `https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_KEY}`;
+    const proxyUrl   = `https://api.allorigins.win/get?url=${encodeURIComponent(finnhubUrl)}`;
+
+    const r = await fetch(proxyUrl);
+    const wrapper = await r.json();
+    if (!wrapper.contents) throw new Error('Proxy failed');
+    const articles = JSON.parse(wrapper.contents);
 
     if (!articles || articles.length === 0) throw new Error('No articles');
 
-    // Filter by country
+    // Filter by country config
     let filtered = articles.filter(a => {
       if (!a.headline || !a.url) return false;
-
-      // Check if source matches
       const sourceMatch = config.sourcesInclude &&
         config.sourcesInclude.some(s => (a.source || '').toLowerCase().includes(s.toLowerCase()));
-
-      // Check if keywords match
       const keywordMatch = config.keywordsInclude &&
         config.keywordsInclude.some(k =>
           (a.headline || '').toLowerCase().includes(k.toLowerCase()) ||
           (a.summary  || '').toLowerCase().includes(k.toLowerCase())
         );
-
       return sourceMatch || keywordMatch;
     });
 
-    // Fallback to general news if not enough Canadian results
+    // Fallback for Canada EN — show all news if not enough Canadian results
     if (filtered.length < 3 && config.fallback) {
       filtered = articles.filter(a => a.headline && a.url).slice(0, 8);
     }
 
     filtered = filtered.slice(0, 8);
-
     if (filtered.length === 0) throw new Error('No matching articles');
 
     list.innerHTML = `
       <div style="font-size:11px;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;gap:6px">
         <span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span>
-        ${filtered.length} articles — ${config.label} — Live from Finnhub News
+        ${filtered.length} articles · ${config.label} · Live from Finnhub News
       </div>
       ${filtered.map(a => buildNewsCard(a)).join('')}`;
 
@@ -866,9 +865,10 @@ async function loadRealNews(country = 'us', btn = null) {
     list.style.display    = 'block';
 
   } catch(e) {
+    // If proxy fails too, show curated financial news sources
     loading.style.display = 'none';
-    error.style.display   = 'block';
-    error.innerHTML = `<div style="font-size:24px;margin-bottom:8px">⚠️</div><div style="font-size:13px;color:var(--text3)">${config.noResultsMsg || 'Could not load news — try refreshing'}</div>`;
+    list.style.display    = 'block';
+    list.innerHTML = buildFallbackSources(country);
   }
 }
 
@@ -898,11 +898,10 @@ function buildFrenchSourcesPanel() {
     { name:'Le Devoir Économie', url:'https://www.ledevoir.com/economie', desc:'Analyses économiques approfondies', icon:'🗞️' },
     { name:'Journal de Montréal Finances', url:'https://www.journaldemontreal.com/finances', desc:'Nouvelles financières en français', icon:'💰' },
   ];
-
   return `
     <div style="background:rgba(59,158,255,0.06);border:1px solid rgba(59,158,255,0.2);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px;font-size:13px;color:var(--text2);line-height:1.6">
       <strong style="color:var(--text)">📡 Nouvelles financières en français</strong><br>
-      Finnhub News couvre principalement les sources anglophones. Voici les meilleures sources québécoises pour les nouvelles financières en français :
+      Finnhub News couvre principalement les sources anglophones. Voici les meilleures sources québécoises :
     </div>
     ${sources.map(s => `
       <div class="real-news-card" style="cursor:pointer" onclick="window.open('${s.url}','_blank')">
@@ -916,6 +915,42 @@ function buildFrenchSourcesPanel() {
       </div>`).join('')}`;
 }
 
+function buildFallbackSources(country) {
+  const usSources = [
+    { name:'MarketWatch', url:'https://www.marketwatch.com', desc:'Real-time US stock market news and analysis', icon:'📈' },
+    { name:'Reuters Finance', url:'https://www.reuters.com/finance', desc:'Breaking financial news from around the world', icon:'🌐' },
+    { name:'CNBC Markets', url:'https://www.cnbc.com/markets', desc:'US market news, stocks and business coverage', icon:'📺' },
+    { name:'Seeking Alpha', url:'https://seekingalpha.com', desc:'Stock market analysis and investor community', icon:'🔍' },
+    { name:'Investopedia News', url:'https://www.investopedia.com/news', desc:'Financial news with educational context', icon:'📚' },
+    { name:'Yahoo Finance', url:'https://finance.yahoo.com', desc:'Comprehensive stock quotes and financial news', icon:'💹' },
+  ];
+  const caSources = [
+    { name:'BNN Bloomberg', url:'https://www.bnnbloomberg.ca', desc:'Canada\'s business and financial news leader', icon:'📺' },
+    { name:'Financial Post', url:'https://financialpost.com', desc:'Canadian business and investing news', icon:'📰' },
+    { name:'Globe and Mail Markets', url:'https://www.theglobeandmail.com/investing', desc:'Canadian investing and market coverage', icon:'🗞️' },
+    { name:'CBC Business', url:'https://www.cbc.ca/news/business', desc:'Business and economic news from CBC', icon:'📻' },
+    { name:'MoneySense', url:'https://www.moneysense.ca', desc:'Personal finance and investing for Canadians', icon:'💰' },
+    { name:'TSX Website', url:'https://www.tsx.com', desc:'Official Toronto Stock Exchange information', icon:'🏦' },
+  ];
+  const sources = country === 'canada-en' ? caSources : usSources;
+  const title = country === 'canada-en' ? '🇨🇦 Top Canadian Financial News Sources' : '🇺🇸 Top US Financial News Sources';
+  return `
+    <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px;font-size:13px;color:var(--text2);line-height:1.6">
+      <strong style="color:var(--text)">📡 ${title}</strong><br>
+      Live news feed temporarily unavailable. Visit these trusted sources directly for the latest financial news:
+    </div>
+    ${sources.map(s => `
+      <div class="real-news-card" style="cursor:pointer" onclick="window.open('${s.url}','_blank')">
+        <div class="rn-source"><span class="rn-source-dot"></span>${s.icon} Verified source</div>
+        <div class="rn-title" style="font-size:15px">${s.name}</div>
+        <div class="rn-summary">${s.desc}</div>
+        <div class="rn-footer">
+          <span class="rn-time">External link</span>
+          <span class="rn-link">Visit site →</span>
+        </div>
+      </div>`).join('')}`;
+}
+
 function getTimeAgo(ts) {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
@@ -925,9 +960,8 @@ function getTimeAgo(ts) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-// Load US news by default on page load
+// Load US news by default
 loadRealNews('us');
 </script>
-
 </body>
 </html>
