@@ -160,6 +160,12 @@ label{display:block;font-size:12px;color:var(--text2);margin-bottom:5px;font-wei
 .form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234d6278' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;cursor:pointer}
 .form-select option{background:var(--navy2)}
 .hint{font-size:11px;color:var(--text3);margin-top:4px}
+.suggestions{background:var(--navy2);border:1px solid var(--border2);border-radius:7px;margin-top:4px;overflow:hidden;max-height:200px;overflow-y:auto}
+.suggestion-item{padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:background .12s;font-size:13px}
+.suggestion-item:hover{background:var(--card2)}
+.sug-sym{font-family:var(--mono);font-weight:600;color:var(--blue);min-width:80px}
+.sug-name{color:var(--text2);font-size:12px}
+.sug-exch{font-size:10px;color:var(--text3);text-align:right}
 .preview{background:var(--navy);border:1px solid var(--border);border-radius:7px;padding:10px 14px;margin-bottom:12px;display:none}
 .preview.show{display:block}
 .pr{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
@@ -168,6 +174,22 @@ label{display:block;font-size:12px;color:var(--text2);margin-bottom:5px;font-wei
 .pr-v{font-family:var(--mono);font-weight:500}
 .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
 .api-source{font-size:10px;color:var(--text3);margin-top:4px}
+.platform-tab{font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);color:var(--text2);cursor:pointer;background:transparent;transition:all .15s;font-family:var(--font)}
+.platform-tab:hover{color:var(--text);border-color:var(--text3)}
+.platform-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.import-instructions{background:var(--navy);border:1px solid var(--border);border-radius:7px;padding:12px 14px;margin-bottom:12px;font-size:12px;color:var(--text2);line-height:1.7}
+.import-instructions strong{color:var(--text)}
+.import-instructions ol{padding-left:16px;margin-top:6px}
+.import-instructions li{margin-bottom:3px}
+.drop-zone{border:2px dashed var(--border2);border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:all .15s;margin-bottom:4px}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--blue);background:rgba(59,158,255,.05)}
+.drop-icon{font-size:32px;margin-bottom:8px}
+.drop-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px}
+.drop-sub{font-size:12px;color:var(--text3)}
+#previewTable th{font-size:10px;color:var(--text3);text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;background:var(--navy);position:sticky;top:0}
+#previewTable td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text2);font-size:12px}
+#previewTable tr:last-child td{border-bottom:none}
+#previewTable tr:hover td{background:var(--card2)}
 
 /* DISCLAIMER / FOOTER */
 .disclaimer{background:var(--navy2);border-top:1px solid var(--border);padding:14px 32px}
@@ -213,7 +235,7 @@ footer{background:var(--navy);border-top:1px solid var(--border);padding:18px 32
 <nav>
   <div class="logo">North<span>Stock</span></div>
   <div class="nav-links">
-    <a href="northstock.html">News</a>
+    <a href="index.html">News</a>
     <a href="#">Earnings Calendar</a>
     <a href="#">Top Picks</a>
     <a href="#">Dividends</a>
@@ -248,6 +270,7 @@ footer{background:var(--navy);border-top:1px solid var(--border);padding:18px 32
     </div>
     <div class="port-actions">
       <button class="btn-ghost" onclick="exportCSV()">Export CSV</button>
+      <button class="btn-ghost" onclick="openImportModal()">⬆ Import portfolio</button>
       <button class="btn-ghost" onclick="resetPortfolio()">Reset</button>
       <button class="btn-primary" onclick="openModal()">+ Add Asset</button>
     </div>
@@ -377,9 +400,10 @@ footer{background:var(--navy);border-top:1px solid var(--border);padding:18px 32
     </div>
 
     <div class="form-group">
-      <label>Symbol / Ticker</label>
-      <input class="form-input" type="text" id="assetSymbol" placeholder="e.g. AAPL, SHOP.TO, BTC" oninput="onSymbol()" style="text-transform:uppercase">
-      <div class="hint">TSX stocks: add .TO suffix (e.g. SHOP.TO, RY.TO)</div>
+      <label>Symbol / Ticker or Company name</label>
+      <input class="form-input" type="text" id="assetSymbol" placeholder="e.g. AAPL, Apple, Bitcoin, Shopify..." oninput="onSymbol()" autocomplete="off">
+      <div id="symbolSuggestions" style="position:relative;z-index:50"></div>
+      <div class="hint">Type a ticker (AAPL) or a company name (Apple) — suggestions appear automatically</div>
       <div class="api-source" id="symSource"></div>
     </div>
 
@@ -418,6 +442,57 @@ footer{background:var(--navy);border-top:1px solid var(--border);padding:18px 32
   </div>
 </div>
 
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="importModalOverlay" onclick="closeImportIfBg(event)">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title">Import portfolio from CSV</div>
+      <button class="modal-close" onclick="closeImportModal()">×</button>
+    </div>
+
+    <!-- Platform tabs -->
+    <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+      <button class="platform-tab active" onclick="selectPlatform('wealthsimple',this)">Wealthsimple</button>
+      <button class="platform-tab" onclick="selectPlatform('questrade',this)">Questrade</button>
+      <button class="platform-tab" onclick="selectPlatform('ibkr',this)">IBKR</button>
+      <button class="platform-tab" onclick="selectPlatform('td',this)">TD Direct</button>
+      <button class="platform-tab" onclick="selectPlatform('generic',this)">Generic CSV</button>
+    </div>
+
+    <!-- Platform instructions -->
+    <div id="platformInstructions" class="import-instructions"></div>
+
+    <!-- Drop zone -->
+    <div class="drop-zone" id="dropZone"
+      ondrop="handleDrop(event)" ondragover="event.preventDefault()"
+      ondragenter="this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      onclick="document.getElementById('csvFileInput').click()">
+      <div class="drop-icon">📂</div>
+      <div class="drop-title">Drop your CSV file here</div>
+      <div class="drop-sub">or click to browse</div>
+      <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="handleFileSelect(event)">
+    </div>
+
+    <!-- Preview table -->
+    <div id="importPreview" style="display:none;margin-top:14px">
+      <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px" id="previewTitle"></div>
+      <div style="overflow-x:auto;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:7px">
+        <table id="previewTable" style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead id="previewHead"></thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--text3)" id="importWarnings"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeImportModal()">Cancel</button>
+      <button class="btn-primary" id="importConfirmBtn" style="display:none" onclick="confirmImport()">Import positions</button>
+    </div>
+  </div>
+</div>
+
 <div class="disclaimer">
   <p><strong>Disclaimer:</strong> NorthStock portfolio tracker is for personal tracking and educational purposes only. Live prices are provided by Finnhub.io and CoinGecko and may be delayed. This tool does not constitute investment advice. Always verify with your brokerage and consult a licensed financial advisor before making investment decisions.</p>
 </div>
@@ -438,36 +513,196 @@ const COINGECKO_URL = 'https://api.coingecko.com/api/v3';
 
 const COLORS = ['#3b9eff','#22c55e','#f59e0b','#a78bfa','#ef4444','#06b6d4','#f97316','#ec4899','#84cc16','#8b5cf6'];
 
-// Crypto symbol → CoinGecko ID mapping
+// Crypto symbol → CoinGecko ID mapping (50+ cryptos)
 const CRYPTO_IDS = {
   'BTC':'bitcoin','ETH':'ethereum','SOL':'solana','BNB':'binancecoin',
   'XRP':'ripple','ADA':'cardano','DOGE':'dogecoin','AVAX':'avalanche-2',
   'MATIC':'matic-network','DOT':'polkadot','LINK':'chainlink','LTC':'litecoin',
-  'SHIB':'shiba-inu','UNI':'uniswap','ATOM':'cosmos'
+  'SHIB':'shiba-inu','UNI':'uniswap','ATOM':'cosmos','TRX':'tron',
+  'TON':'the-open-network','ICP':'internet-computer','INJ':'injective-protocol',
+  'SUI':'sui','APT':'aptos','ARB':'arbitrum','OP':'optimism',
+  'NEAR':'near','FTM':'fantom','HBAR':'hedera-hashgraph','VET':'vechain',
+  'ALGO':'algorand','ETC':'ethereum-classic','BCH':'bitcoin-cash',
+  'XLM':'stellar','SAND':'the-sandbox','MANA':'decentraland',
+  'AAVE':'aave','CRV':'curve-dao-token','MKR':'maker','SNX':'synthetix-network-token',
+  'LDO':'lido-dao','RUNE':'thorchain','FIL':'filecoin','THETA':'theta-token',
+  'GRT':'the-graph','ENS':'ethereum-name-service','IMX':'immutable-x',
+  'PEPE':'pepe','FLOKI':'floki','WIF':'dogwifcoin','BONK':'bonk',
+  'STX':'blockstack','EGLD':'elrond-erd-2','XTZ':'tezos','EOS':'eos',
+  'IOTA':'iota','NEO':'neo','DASH':'dash','ZEC':'zcash','XMR':'monero',
+  'CAKE':'pancakeswap-token','1INCH':'1inch','BAT':'basic-attention-token',
 };
 
-// Known assets for auto-fill
+// Crypto name aliases for search
+const CRYPTO_NAMES = {
+  'bitcoin':['BTC'],'btc':['BTC'],'ethereum':['ETH'],'ether':['ETH'],
+  'solana':['SOL'],'ripple':['XRP'],'xrp':['XRP'],'cardano':['ADA'],
+  'dogecoin':['DOGE'],'doge':['DOGE'],'avalanche':['AVAX'],
+  'polygon':['MATIC'],'matic':['MATIC'],'polkadot':['DOT'],
+  'chainlink':['LINK'],'litecoin':['LTC'],'shiba':['SHIB'],'shib':['SHIB'],
+  'uniswap':['UNI'],'cosmos':['ATOM'],'tron':['TRX'],'toncoin':['TON'],
+  'near':['NEAR'],'arbitrum':['ARB'],'optimism':['OP'],'aptos':['APT'],
+  'sui':['SUI'],'injective':['INJ'],'fantom':['FTM'],'hedera':['HBAR'],
+  'vechain':['VET'],'algorand':['ALGO'],'stellar':['XLM'],
+  'sandbox':['SAND'],'decentraland':['MANA'],'aave':['AAVE'],
+  'filecoin':['FIL'],'theta':['THETA'],'graph':['GRT'],'pepe':['PEPE'],
+  'monero':['XMR'],'zcash':['ZEC'],'dash':['DASH'],'tezos':['XTZ'],
+  'bitcoin cash':['BCH'],'ethereum classic':['ETC'],'maker':['MKR'],
+};
+
+// Known assets for auto-fill — Stocks, ETFs, Crypto
 const KNOWN = {
-  'AAPL':['Apple Inc.','NASDAQ','Stock'],'NVDA':['Nvidia Corp.','NASDAQ','Stock'],
-  'MSFT':['Microsoft','NASDAQ','Stock'],'AMZN':['Amazon','NASDAQ','Stock'],
-  'GOOGL':['Alphabet Inc.','NASDAQ','Stock'],'META':['Meta Platforms','NASDAQ','Stock'],
-  'TSLA':['Tesla Inc.','NASDAQ','Stock'],'INTC':['Intel Corp.','NASDAQ','Stock'],
+  // ── US STOCKS ──
+  'AAPL':['Apple Inc.','NASDAQ','Stock'],
+  'NVDA':['Nvidia Corporation','NASDAQ','Stock'],
+  'MSFT':['Microsoft Corporation','NASDAQ','Stock'],
+  'AMZN':['Amazon.com Inc.','NASDAQ','Stock'],
+  'GOOGL':['Alphabet Inc. (Google)','NASDAQ','Stock'],
+  'GOOG':['Alphabet Inc. (Google)','NASDAQ','Stock'],
+  'META':['Meta Platforms (Facebook)','NASDAQ','Stock'],
+  'TSLA':['Tesla Inc.','NASDAQ','Stock'],
+  'INTC':['Intel Corporation','NASDAQ','Stock'],
   'AMD':['Advanced Micro Devices','NASDAQ','Stock'],
-  'SHOP.TO':['Shopify Inc.','TSX','Stock'],'RY.TO':['Royal Bank of Canada','TSX','Stock'],
-  'ENB.TO':['Enbridge Inc.','TSX','Stock'],'TD.TO':['TD Bank','TSX','Stock'],
-  'CNR.TO':['CN Rail','TSX','Stock'],'CNQ.TO':['Canadian Natural Resources','TSX','Stock'],
-  'BMO.TO':['Bank of Montreal','TSX','Stock'],'BNS.TO':['Scotiabank','TSX','Stock'],
-  'CP.TO':['Canadian Pacific','TSX','Stock'],'SU.TO':['Suncor Energy','TSX','Stock'],
-  'VFV.TO':['Vanguard S&P 500 ETF (CAD)','TSX','ETF'],'XIU.TO':['iShares S&P/TSX 60','TSX','ETF'],
-  'XEF.TO':['iShares Core MSCI EAFE','TSX','ETF'],'ZAG.TO':['BMO Aggregate Bond','TSX','ETF'],
-  'QQQ':['Invesco QQQ Trust','NASDAQ','ETF'],'SPY':['SPDR S&P 500 ETF','NYSE','ETF'],
-  'VOO':['Vanguard S&P 500 ETF','NYSE','ETF'],'VTI':['Vanguard Total Market ETF','NYSE','ETF'],
-  'ARKK':['ARK Innovation ETF','NYSE','ETF'],'GLD':['SPDR Gold Shares','NYSE','ETF'],
-  'BTC':['Bitcoin','Crypto','Crypto'],'ETH':['Ethereum','Crypto','Crypto'],
-  'SOL':['Solana','Crypto','Crypto'],'XRP':['XRP (Ripple)','Crypto','Crypto'],
-  'ADA':['Cardano','Crypto','Crypto'],'DOGE':['Dogecoin','Crypto','Crypto'],
-  'AVAX':['Avalanche','Crypto','Crypto'],'MATIC':['Polygon','Crypto','Crypto'],
-  'LINK':['Chainlink','Crypto','Crypto'],'DOT':['Polkadot','Crypto','Crypto'],
+  'ORCL':['Oracle Corporation','NYSE','Stock'],
+  'CRM':['Salesforce Inc.','NYSE','Stock'],
+  'NFLX':['Netflix Inc.','NASDAQ','Stock'],
+  'PYPL':['PayPal Holdings','NASDAQ','Stock'],
+  'ADBE':['Adobe Inc.','NASDAQ','Stock'],
+  'QCOM':['Qualcomm Inc.','NASDAQ','Stock'],
+  'TXN':['Texas Instruments','NASDAQ','Stock'],
+  'AVGO':['Broadcom Inc.','NASDAQ','Stock'],
+  'UBER':['Uber Technologies','NYSE','Stock'],
+  'ABNB':['Airbnb Inc.','NASDAQ','Stock'],
+  'COIN':['Coinbase Global','NASDAQ','Stock'],
+  'RBLX':['Roblox Corporation','NYSE','Stock'],
+  'SNAP':['Snap Inc.','NYSE','Stock'],
+  'SPOT':['Spotify Technology','NYSE','Stock'],
+  'SQ':['Block Inc. (Square)','NYSE','Stock'],
+  'V':['Visa Inc.','NYSE','Stock'],
+  'MA':['Mastercard Inc.','NYSE','Stock'],
+  'JPM':['JPMorgan Chase','NYSE','Stock'],
+  'BAC':['Bank of America','NYSE','Stock'],
+  'WFC':['Wells Fargo','NYSE','Stock'],
+  'GS':['Goldman Sachs','NYSE','Stock'],
+  'MS':['Morgan Stanley','NYSE','Stock'],
+  'JNJ':['Johnson & Johnson','NYSE','Stock'],
+  'PFE':['Pfizer Inc.','NYSE','Stock'],
+  'MRNA':['Moderna Inc.','NASDAQ','Stock'],
+  'UNH':['UnitedHealth Group','NYSE','Stock'],
+  'WMT':['Walmart Inc.','NYSE','Stock'],
+  'KO':['Coca-Cola Company','NYSE','Stock'],
+  'PEP':['PepsiCo Inc.','NASDAQ','Stock'],
+  'MCD':['McDonald\'s Corporation','NYSE','Stock'],
+  'DIS':['Walt Disney Company','NYSE','Stock'],
+  'BA':['Boeing Company','NYSE','Stock'],
+  'CAT':['Caterpillar Inc.','NYSE','Stock'],
+  'XOM':['Exxon Mobil','NYSE','Stock'],
+  'CVX':['Chevron Corporation','NYSE','Stock'],
+  // ── TSX CANADIAN STOCKS ──
+  'SHOP.TO':['Shopify Inc.','TSX','Stock'],
+  'RY.TO':['Royal Bank of Canada','TSX','Stock'],
+  'TD.TO':['TD Bank','TSX','Stock'],
+  'ENB.TO':['Enbridge Inc.','TSX','Stock'],
+  'CNR.TO':['CN Rail','TSX','Stock'],
+  'CNQ.TO':['Canadian Natural Resources','TSX','Stock'],
+  'BMO.TO':['Bank of Montreal','TSX','Stock'],
+  'BNS.TO':['Scotiabank','TSX','Stock'],
+  'CP.TO':['Canadian Pacific Kansas City','TSX','Stock'],
+  'SU.TO':['Suncor Energy','TSX','Stock'],
+  'TRI.TO':['Thomson Reuters','TSX','Stock'],
+  'ABX.TO':['Barrick Gold','TSX','Stock'],
+  'MFC.TO':['Manulife Financial','TSX','Stock'],
+  'SLF.TO':['Sun Life Financial','TSX','Stock'],
+  'WCN.TO':['Waste Connections','TSX','Stock'],
+  'ATD.TO':['Alimentation Couche-Tard','TSX','Stock'],
+  'CSU.TO':['Constellation Software','TSX','Stock'],
+  'FFH.TO':['Fairfax Financial','TSX','Stock'],
+  'T.TO':['TELUS Corporation','TSX','Stock'],
+  'BCE.TO':['BCE Inc.','TSX','Stock'],
+  'POW.TO':['Power Corporation','TSX','Stock'],
+  'IFC.TO':['Intact Financial','TSX','Stock'],
+  'QSR.TO':['Restaurant Brands (Tim Hortons)','TSX','Stock'],
+  'OTEX.TO':['Open Text Corporation','TSX','Stock'],
+  'CAE.TO':['CAE Inc.','TSX','Stock'],
+  'AEM.TO':['Agnico Eagle Mines','TSX','Stock'],
+  'WPM.TO':['Wheaton Precious Metals','TSX','Stock'],
+  // ── ETFs ──
+  'VFV.TO':['Vanguard S&P 500 ETF (CAD)','TSX','ETF'],
+  'XIU.TO':['iShares S&P/TSX 60 ETF','TSX','ETF'],
+  'XEF.TO':['iShares Core MSCI EAFE ETF','TSX','ETF'],
+  'ZAG.TO':['BMO Aggregate Bond ETF','TSX','ETF'],
+  'XIC.TO':['iShares Core S&P/TSX Capped ETF','TSX','ETF'],
+  'XEQT.TO':['iShares Core Equity ETF Portfolio','TSX','ETF'],
+  'VEQT.TO':['Vanguard All-Equity ETF Portfolio','TSX','ETF'],
+  'VGRO.TO':['Vanguard Growth ETF Portfolio','TSX','ETF'],
+  'ZSP.TO':['BMO S&P 500 Index ETF','TSX','ETF'],
+  'HXS.TO':['Horizons S&P 500 Index ETF','TSX','ETF'],
+  'QQQ':['Invesco QQQ Trust (NASDAQ-100)','NASDAQ','ETF'],
+  'SPY':['SPDR S&P 500 ETF Trust','NYSE','ETF'],
+  'VOO':['Vanguard S&P 500 ETF','NYSE','ETF'],
+  'VTI':['Vanguard Total Stock Market ETF','NYSE','ETF'],
+  'ARKK':['ARK Innovation ETF','NYSE','ETF'],
+  'GLD':['SPDR Gold Shares ETF','NYSE','ETF'],
+  'SLV':['iShares Silver Trust ETF','NYSE','ETF'],
+  'VNQ':['Vanguard Real Estate ETF','NYSE','ETF'],
+  'XLE':['Energy Select Sector SPDR ETF','NYSE','ETF'],
+  'XLF':['Financial Select Sector SPDR ETF','NYSE','ETF'],
+  'XLK':['Technology Select Sector SPDR ETF','NYSE','ETF'],
+  'SCHD':['Schwab US Dividend Equity ETF','NYSE','ETF'],
+  // ── CRYPTO ──
+  'BTC':['Bitcoin','Crypto','Crypto'],
+  'ETH':['Ethereum','Crypto','Crypto'],
+  'SOL':['Solana','Crypto','Crypto'],
+  'XRP':['XRP (Ripple)','Crypto','Crypto'],
+  'ADA':['Cardano','Crypto','Crypto'],
+  'DOGE':['Dogecoin','Crypto','Crypto'],
+  'AVAX':['Avalanche','Crypto','Crypto'],
+  'MATIC':['Polygon (MATIC)','Crypto','Crypto'],
+  'LINK':['Chainlink','Crypto','Crypto'],
+  'DOT':['Polkadot','Crypto','Crypto'],
+  'LTC':['Litecoin','Crypto','Crypto'],
+  'SHIB':['Shiba Inu','Crypto','Crypto'],
+  'UNI':['Uniswap','Crypto','Crypto'],
+  'ATOM':['Cosmos','Crypto','Crypto'],
+  'TRX':['TRON','Crypto','Crypto'],
+  'TON':['Toncoin','Crypto','Crypto'],
+  'NEAR':['NEAR Protocol','Crypto','Crypto'],
+  'ARB':['Arbitrum','Crypto','Crypto'],
+  'OP':['Optimism','Crypto','Crypto'],
+  'APT':['Aptos','Crypto','Crypto'],
+  'SUI':['Sui','Crypto','Crypto'],
+  'INJ':['Injective','Crypto','Crypto'],
+  'FTM':['Fantom','Crypto','Crypto'],
+  'HBAR':['Hedera Hashgraph','Crypto','Crypto'],
+  'VET':['VeChain','Crypto','Crypto'],
+  'ALGO':['Algorand','Crypto','Crypto'],
+  'XLM':['Stellar Lumens','Crypto','Crypto'],
+  'BCH':['Bitcoin Cash','Crypto','Crypto'],
+  'ETC':['Ethereum Classic','Crypto','Crypto'],
+  'XMR':['Monero','Crypto','Crypto'],
+  'AAVE':['Aave','Crypto','Crypto'],
+  'MKR':['Maker','Crypto','Crypto'],
+  'SAND':['The Sandbox','Crypto','Crypto'],
+  'MANA':['Decentraland','Crypto','Crypto'],
+  'FIL':['Filecoin','Crypto','Crypto'],
+  'GRT':['The Graph','Crypto','Crypto'],
+  'PEPE':['Pepe','Crypto','Crypto'],
+  'FLOKI':['Floki Inu','Crypto','Crypto'],
+  'WIF':['dogwifhat','Crypto','Crypto'],
+  'BONK':['Bonk','Crypto','Crypto'],
+  'ICP':['Internet Computer','Crypto','Crypto'],
+  'STX':['Stacks','Crypto','Crypto'],
+  'THETA':['Theta Network','Crypto','Crypto'],
+  'ENS':['Ethereum Name Service','Crypto','Crypto'],
+  'LDO':['Lido DAO','Crypto','Crypto'],
+  'CRV':['Curve DAO Token','Crypto','Crypto'],
+  'RUNE':['THORChain','Crypto','Crypto'],
+  'ZEC':['Zcash','Crypto','Crypto'],
+  'DASH':['Dash','Crypto','Crypto'],
+  'XTZ':['Tezos','Crypto','Crypto'],
+  'BAT':['Basic Attention Token','Crypto','Crypto'],
+  'CAKE':['PancakeSwap','Crypto','Crypto'],
+  '1INCH':['1inch Network','Crypto','Crypto'],
 };
 
 // ═══════════════════════════════════════════════
@@ -874,20 +1109,82 @@ function onTypeChange() {
 
 let symbolDebounce = null;
 function onSymbol() {
-  const sym = document.getElementById('assetSymbol').value.toUpperCase();
-  document.getElementById('assetSymbol').value = sym;
-  if (KNOWN[sym]) {
-    const [name, exch, type] = KNOWN[sym];
-    if (!document.getElementById('assetName').value || document.getElementById('assetName').value === '') {
-      document.getElementById('assetName').value = name;
-    }
+  const raw = document.getElementById('assetSymbol').value;
+  const upper = raw.toUpperCase().trim();
+  const lower = raw.toLowerCase().trim();
+
+  // Exact ticker match → fill everything immediately
+  if (KNOWN[upper]) {
+    document.getElementById('assetSymbol').value = upper;
+    const [name, exch, type] = KNOWN[upper];
+    if (!document.getElementById('assetName').value) document.getElementById('assetName').value = name;
     document.getElementById('assetExchange').value = exch;
     document.getElementById('assetType').value = type;
+    hideSuggestions();
+    clearTimeout(symbolDebounce);
+    symbolDebounce = setTimeout(() => fetchLivePrice(upper), 600);
+    return;
   }
-  clearTimeout(symbolDebounce);
-  if (sym.length >= 2) {
-    symbolDebounce = setTimeout(() => fetchLivePrice(sym), 600);
+
+  // Search by company name, crypto name, or partial ticker
+  if (lower.length >= 2) {
+    const matches = [];
+    const seen = new Set();
+
+    // Check crypto name aliases first (bitcoin → BTC, ethereum → ETH etc.)
+    for (const [alias, syms] of Object.entries(CRYPTO_NAMES || {})) {
+      if (alias.includes(lower)) {
+        syms.forEach(sym => {
+          if (!seen.has(sym) && KNOWN[sym]) { matches.push([sym, KNOWN[sym]]); seen.add(sym); }
+        });
+      }
+    }
+
+    // Then search all KNOWN by ticker or name
+    for (const [sym, info] of Object.entries(KNOWN)) {
+      if (!seen.has(sym) && (
+        sym.toLowerCase().includes(lower) ||
+        info[0].toLowerCase().includes(lower)
+      )) {
+        matches.push([sym, info]);
+        seen.add(sym);
+      }
+    }
+
+    if (matches.length > 0) {
+      showSuggestions(matches.slice(0, 10));
+    } else {
+      hideSuggestions();
+    }
+  } else {
+    hideSuggestions();
   }
+}
+
+function showSuggestions(matches) {
+  const box = document.getElementById('symbolSuggestions');
+  const typeIcon = t => t==='Crypto'?'🔶':t==='ETF'?'📊':'📈';
+  box.innerHTML = `<div class="suggestions">${matches.map(([sym, info]) =>
+    `<div class="suggestion-item" onclick="selectSuggestion('${sym}')">
+      <span class="sug-sym">${typeIcon(info[2])} ${sym}</span>
+      <span class="sug-name">${info[0]}</span>
+      <span class="sug-exch">${info[1]}</span>
+    </div>`
+  ).join('')}</div>`;
+}
+
+function hideSuggestions() {
+  document.getElementById('symbolSuggestions').innerHTML = '';
+}
+
+function selectSuggestion(sym) {
+  const [name, exch, type] = KNOWN[sym];
+  document.getElementById('assetSymbol').value = sym;
+  document.getElementById('assetName').value = name;
+  document.getElementById('assetExchange').value = exch;
+  document.getElementById('assetType').value = type;
+  hideSuggestions();
+  fetchLivePrice(sym);
 }
 
 async function fetchLivePrice(sym) {
@@ -1015,6 +1312,291 @@ function exportCSV() {
 function resetPortfolio() {
   if (!confirm('Delete all holdings? This cannot be undone.')) return;
   portfolio=[]; save(); render();
+}
+
+// ═══════════════════════════════════════════════
+// IMPORT FUNCTIONALITY
+// ═══════════════════════════════════════════════
+let currentPlatform = 'wealthsimple';
+let parsedImportRows = [];
+
+const PLATFORM_INFO = {
+  wealthsimple: {
+    name: 'Wealthsimple',
+    instructions: `<strong>Comment exporter depuis Wealthsimple :</strong>
+      <ol>
+        <li>Connecte-toi à <strong>my.wealthsimple.com</strong></li>
+        <li>Va dans ton compte → <strong>Activity</strong> (Activité)</li>
+        <li>Clique <strong>Download</strong> (Télécharger) en haut à droite</li>
+        <li>Sélectionne <strong>Holdings</strong> ou <strong>Positions</strong></li>
+        <li>Glisse le fichier CSV téléchargé ici</li>
+      </ol>`,
+    symbolCol: ['symbol','ticker','security'],
+    sharesCol: ['quantity','shares','units','qty'],
+    costCol: ['average cost','book value','avg cost','average price','cost per share'],
+    nameCol: ['description','name','security name'],
+  },
+  questrade: {
+    name: 'Questrade',
+    instructions: `<strong>Comment exporter depuis Questrade :</strong>
+      <ol>
+        <li>Connecte-toi à <strong>questrade.com</strong></li>
+        <li>Va dans <strong>Accounts</strong> → ton compte</li>
+        <li>Clique <strong>Holdings</strong> puis <strong>Export to CSV</strong></li>
+        <li>Glisse le fichier CSV ici</li>
+      </ol>`,
+    symbolCol: ['symbol','ticker'],
+    sharesCol: ['quantity','shares','qty'],
+    costCol: ['average price','avg price','book cost','cost/share'],
+    nameCol: ['description','name'],
+  },
+  ibkr: {
+    name: 'Interactive Brokers',
+    instructions: `<strong>Comment exporter depuis IBKR :</strong>
+      <ol>
+        <li>Connecte-toi à <strong>clientportal.ibkr.com</strong></li>
+        <li>Va dans <strong>Performance & Reports</strong> → <strong>Statements</strong></li>
+        <li>Sélectionne <strong>Portfolio Analyst</strong> → <strong>Positions</strong></li>
+        <li>Exporte en format <strong>CSV</strong></li>
+        <li>Glisse le fichier ici</li>
+      </ol>`,
+    symbolCol: ['symbol','ticker','financial instrument'],
+    sharesCol: ['quantity','position','shares'],
+    costCol: ['avg price','average cost','cost basis'],
+    nameCol: ['description','name','security'],
+  },
+  td: {
+    name: 'TD Direct Investing',
+    instructions: `<strong>Comment exporter depuis TD Direct Investing :</strong>
+      <ol>
+        <li>Connecte-toi à <strong>td.com</strong></li>
+        <li>Va dans <strong>My Accounts</strong> → <strong>Holdings</strong></li>
+        <li>Clique <strong>Download</strong> → <strong>CSV</strong></li>
+        <li>Glisse le fichier ici</li>
+      </ol>`,
+    symbolCol: ['symbol','ticker','security id'],
+    sharesCol: ['quantity','shares','units'],
+    costCol: ['average cost','book value','avg cost per share'],
+    nameCol: ['description','security name','name'],
+  },
+  generic: {
+    name: 'Generic CSV',
+    instructions: `<strong>Format CSV générique accepté :</strong><br>
+      Ton fichier doit avoir au minimum ces colonnes (peu importe l'ordre) :<br><br>
+      <code style="background:var(--navy);padding:4px 8px;border-radius:4px;font-size:11px">Symbol, Shares, Average Cost, Name</code><br><br>
+      Les noms de colonnes acceptés : Symbol/Ticker, Shares/Quantity/Units, Average Cost/Avg Price/Book Value, Name/Description`,
+    symbolCol: ['symbol','ticker','sym'],
+    sharesCol: ['shares','quantity','units','qty','positions'],
+    costCol: ['average cost','avg cost','avg price','book value','cost','price paid','cost per share','average price'],
+    nameCol: ['name','description','company','security'],
+  },
+};
+
+function openImportModal() {
+  document.getElementById('importModalOverlay').classList.add('open');
+  selectPlatform('wealthsimple', document.querySelector('.platform-tab'));
+}
+function closeImportModal() {
+  document.getElementById('importModalOverlay').classList.remove('open');
+  parsedImportRows = [];
+  document.getElementById('importPreview').style.display = 'none';
+  document.getElementById('importConfirmBtn').style.display = 'none';
+  document.getElementById('csvFileInput').value = '';
+}
+function closeImportIfBg(e) { if (e.target===document.getElementById('importModalOverlay')) closeImportModal(); }
+
+function selectPlatform(platform, btn) {
+  currentPlatform = platform;
+  document.querySelectorAll('.platform-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const info = PLATFORM_INFO[platform];
+  document.getElementById('platformInstructions').innerHTML = info.instructions;
+  document.getElementById('importPreview').style.display = 'none';
+  document.getElementById('importConfirmBtn').style.display = 'none';
+  parsedImportRows = [];
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.csv')) processCSVFile(file);
+  else alert('Please drop a .csv file.');
+}
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) processCSVFile(file);
+}
+
+function processCSVFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => parseCSV(e.target.result);
+  reader.readAsText(file);
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n').filter(l => l.trim());
+  if (lines.length < 2) { alert('CSV file appears empty or invalid.'); return; }
+
+  // Parse header row — handle quoted fields
+  const parseRow = row => {
+    const result = []; let cur = ''; let inQ = false;
+    for (let c of row) {
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    result.push(cur.trim());
+    return result;
+  };
+
+  const headers = parseRow(lines[0]).map(h => h.toLowerCase().replace(/['"]/g,'').trim());
+  const info = PLATFORM_INFO[currentPlatform];
+
+  // Find column indices
+  const findCol = candidates => {
+    for (const c of candidates) {
+      const idx = headers.findIndex(h => h.includes(c));
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+
+  const symIdx  = findCol(info.symbolCol);
+  const sharesIdx = findCol(info.sharesCol);
+  const costIdx   = findCol(info.costCol);
+  const nameIdx   = findCol(info.nameCol);
+
+  if (symIdx === -1) {
+    alert(`Could not find a Symbol/Ticker column in your CSV.\n\nHeaders found: ${headers.join(', ')}\n\nTry using "Generic CSV" format.`);
+    return;
+  }
+
+  // Parse data rows
+  const rows = [];
+  const warnings = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = parseRow(lines[i]);
+    const sym = cols[symIdx]?.replace(/['"]/g,'').trim().toUpperCase();
+    if (!sym || sym === 'SYMBOL' || sym === 'TICKER') continue;
+
+    const sharesRaw = sharesIdx !== -1 ? cols[sharesIdx]?.replace(/['",$\s]/g,'') : '';
+    const costRaw   = costIdx !== -1   ? cols[costIdx]?.replace(/['",$\s]/g,'')   : '';
+    const nameRaw   = nameIdx !== -1   ? cols[nameIdx]?.replace(/['"]/g,'').trim() : '';
+
+    const shares = parseFloat(sharesRaw);
+    const cost   = parseFloat(costRaw);
+
+    if (isNaN(shares) || shares <= 0) { warnings.push(`Row ${i+1}: "${sym}" skipped — invalid quantity`); continue; }
+
+    // Look up known info
+    const known = KNOWN[sym] || KNOWN[sym+'.TO'];
+    const finalSym = KNOWN[sym] ? sym : (KNOWN[sym+'.TO'] ? sym+'.TO' : sym);
+    const name = nameRaw || known?.[0] || sym;
+    const type = known?.[2] || (CRYPTO_IDS[sym] ? 'Crypto' : 'Stock');
+    const exch = known?.[1] || 'Other';
+
+    rows.push({
+      symbol: finalSym, name, shares,
+      avgCost: isNaN(cost) ? 0 : cost,
+      type, exchange: exch,
+      hasPrice: !isNaN(cost) && cost > 0,
+    });
+  }
+
+  if (rows.length === 0) {
+    alert('No valid positions found in this CSV. Check the format or try Generic CSV.');
+    return;
+  }
+
+  parsedImportRows = rows;
+  showImportPreview(rows, warnings);
+}
+
+function showImportPreview(rows, warnings) {
+  document.getElementById('previewTitle').textContent = `${rows.length} positions detected — review before importing`;
+
+  const thead = document.getElementById('previewHead');
+  thead.innerHTML = `<tr><th>Symbol</th><th>Name</th><th>Type</th><th>Shares</th><th>Avg Cost</th><th>Status</th></tr>`;
+
+  const tbody = document.getElementById('previewBody');
+  tbody.innerHTML = rows.map(r => {
+    const status = !r.hasPrice
+      ? `<span style="color:var(--gold)">⚠ Price needed</span>`
+      : `<span style="color:var(--green)">✓ Ready</span>`;
+    const knownBadge = KNOWN[r.symbol]
+      ? `<span style="color:var(--green);font-size:10px">✓</span>`
+      : `<span style="color:var(--text3);font-size:10px">?</span>`;
+    return `<tr>
+      <td><strong style="color:var(--blue);font-family:var(--mono)">${r.symbol}</strong> ${knownBadge}</td>
+      <td style="color:var(--text2)">${r.name}</td>
+      <td>${r.type}</td>
+      <td style="font-family:var(--mono)">${r.shares}</td>
+      <td style="font-family:var(--mono)">${r.hasPrice ? '$'+r.avgCost.toFixed(2) : '—'}</td>
+      <td>${status}</td>
+    </tr>`;
+  }).join('');
+
+  const warningEl = document.getElementById('importWarnings');
+  if (warnings.length > 0) {
+    warningEl.innerHTML = `⚠ ${warnings.length} row(s) skipped: ${warnings.join(' · ')}`;
+  } else {
+    warningEl.innerHTML = '';
+  }
+
+  const noPrice = rows.filter(r => !r.hasPrice).length;
+  if (noPrice > 0) {
+    warningEl.innerHTML += `<br>💡 ${noPrice} position(s) have no average cost — live price will be used as cost basis after import.`;
+  }
+
+  document.getElementById('importPreview').style.display = 'block';
+  document.getElementById('importConfirmBtn').style.display = 'inline-block';
+  document.getElementById('importConfirmBtn').textContent = `Import ${rows.length} positions`;
+}
+
+async function confirmImport() {
+  if (!parsedImportRows.length) return;
+  const btn = document.getElementById('importConfirmBtn');
+  btn.textContent = 'Importing...';
+  btn.disabled = true;
+
+  let added = 0, merged = 0;
+
+  for (const row of parsedImportRows) {
+    const existing = portfolio.find(p => p.symbol === row.symbol);
+    if (existing) {
+      // Merge — weighted average
+      const totalShares = existing.shares + row.shares;
+      existing.avgCost = ((existing.shares * existing.avgCost) + (row.shares * row.avgCost)) / totalShares;
+      existing.shares = totalShares;
+      merged++;
+    } else {
+      portfolio.push({
+        id: Date.now().toString() + Math.random(),
+        symbol: row.symbol,
+        name: row.name,
+        shares: row.shares,
+        avgCost: row.avgCost > 0 ? row.avgCost : 1,
+        price: row.avgCost > 0 ? row.avgCost : 1,
+        type: row.type,
+        exchange: row.exchange,
+        dayChgPct: 0,
+      });
+      added++;
+    }
+  }
+
+  save();
+  closeImportModal();
+  render();
+
+  // Fetch live prices for all imported positions
+  setStatus('loading', `Fetching live prices for ${added + merged} imported positions...`);
+  await refreshAllPrices();
+
+  alert(`✅ Import complete!\n${added} new position(s) added\n${merged} existing position(s) merged\n\nLive prices are now loading automatically.`);
 }
 
 // ═══════════════════════════════════════════════
