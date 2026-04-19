@@ -223,6 +223,12 @@
   .sector-chg.up { color: var(--green); }
   .sector-chg.dn { color: var(--red); }
 
+  /* COUNTRY FILTERS */
+  .country-filters { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .country-btn { font-size:12px; padding:7px 16px; border-radius:20px; border:1px solid var(--border); color:var(--text2); cursor:pointer; background:transparent; font-family:var(--font); transition:all .15s; font-weight:500; }
+  .country-btn:hover { color:var(--text); border-color:var(--text3); background:var(--card2); }
+  .country-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); }
+
   /* NEWS TABS */
   .news-tabs { display:flex; gap:10px; margin-bottom:18px; }
   .news-tab { flex:1; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 16px; cursor:pointer; text-align:left; font-family:var(--font); color:var(--text2); font-size:13px; font-weight:500; transition:all .15s; display:flex; flex-direction:column; gap:3px; }
@@ -481,6 +487,20 @@
 
     <!-- REAL NEWS TAB -->
     <div id="tab-real">
+
+      <!-- COUNTRY FILTERS -->
+      <div class="country-filters">
+        <button class="country-btn active" onclick="loadRealNews('us', this)">
+          🇺🇸 USA
+        </button>
+        <button class="country-btn" onclick="loadRealNews('canada-en', this)">
+          🇨🇦 Canada (EN)
+        </button>
+        <button class="country-btn" onclick="loadRealNews('canada-fr', this)">
+          🇨🇦 Canada (FR)
+        </button>
+      </div>
+
       <div id="real-news-loading" style="text-align:center;padding:40px;color:var(--text2)">
         <div style="font-size:24px;margin-bottom:12px">📡</div>
         <div style="font-size:14px">Loading real financial news...</div>
@@ -743,42 +763,104 @@ function switchTab(tab, btn) {
   document.getElementById('tab-ai').style.display   = tab === 'ai'   ? 'block' : 'none';
 }
 
+// ── COUNTRY FILTER CONFIG ──────────────────────
+const COUNTRY_CONFIG = {
+  'us': {
+    label: '🇺🇸 USA',
+    category: 'general',
+    // Filter to keep only US-focused sources
+    sourcesInclude: ['Reuters','Bloomberg','MarketWatch','CNBC','Wall Street Journal','WSJ','Yahoo Finance','Barron','Forbes','Investopedia','Seeking Alpha','Motley Fool','Business Insider','Financial Times','The Street'],
+    language: 'en',
+    noResultsMsg: 'No US news available right now — try again shortly.',
+  },
+  'canada-en': {
+    label: '🇨🇦 Canada (English)',
+    category: 'general',
+    // Canadian English sources
+    sourcesInclude: ['Globe and Mail','Financial Post','CBC','CTV','BNN Bloomberg','BNN','Toronto Star','National Post','Canadian Press','CP24','Global News','TSX','Bay Street'],
+    // Also keep any article mentioning Canada/TSX/CAD
+    keywordsInclude: ['Canada','Canadian','TSX','CAD','Toronto','Vancouver','Calgary','Montreal','Ottawa','Bay Street','TFSA','RRSP'],
+    language: 'en',
+    noResultsMsg: 'No Canadian English news available right now — showing top financial news.',
+    fallback: true,
+  },
+  'canada-fr': {
+    label: '🇨🇦 Canada (Français)',
+    category: 'general',
+    // French Canadian sources
+    sourcesInclude: ['Radio-Canada','Le Devoir','La Presse','TVA','Journal de Montréal','Les Affaires','Finance et Investissement','Conseiller','Québec'],
+    keywordsInclude: ['Québec','québécois','TSX','Bourse','investissement','actions','dividende','économie canadienne','Banque du Canada','REER','CELI'],
+    language: 'fr',
+    noResultsMsg: 'Peu de nouvelles financières en français disponibles via Finnhub. Voici les meilleures sources alternatives :',
+    showFrenchSources: true,
+  },
+};
+
 // ── FETCH REAL NEWS FROM FINNHUB ───────────────
-async function loadRealNews() {
+async function loadRealNews(country = 'us', btn = null) {
+  // Update active button
+  if (btn) {
+    document.querySelectorAll('.country-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
   const loading = document.getElementById('real-news-loading');
   const list    = document.getElementById('real-news-list');
   const error   = document.getElementById('real-news-error');
+  const config  = COUNTRY_CONFIG[country];
+
+  loading.style.display = 'block';
+  list.style.display    = 'none';
+  error.style.display   = 'none';
+  list.innerHTML        = '';
+
+  // Special handling for French Canadian
+  if (country === 'canada-fr') {
+    loading.style.display = 'none';
+    list.style.display    = 'block';
+    list.innerHTML = buildFrenchSourcesPanel();
+    return;
+  }
 
   try {
-    // Fetch general market news from Finnhub
-    const r = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_KEY}`);
+    const r = await fetch(`https://finnhub.io/api/v1/news?category=${config.category}&token=${FINNHUB_KEY}`);
     const articles = await r.json();
 
     if (!articles || articles.length === 0) throw new Error('No articles');
 
-    // Filter and show top 8 articles
-    const filtered = articles
-      .filter(a => a.headline && a.summary && a.url)
-      .slice(0, 8);
+    // Filter by country
+    let filtered = articles.filter(a => {
+      if (!a.headline || !a.url) return false;
 
-    if (filtered.length === 0) throw new Error('No valid articles');
+      // Check if source matches
+      const sourceMatch = config.sourcesInclude &&
+        config.sourcesInclude.some(s => (a.source || '').toLowerCase().includes(s.toLowerCase()));
 
-    list.innerHTML = filtered.map(a => {
-      const timeAgo = getTimeAgo(a.datetime * 1000);
-      const summary = a.summary.length > 200 ? a.summary.slice(0, 200) + '...' : a.summary;
-      return `<div class="real-news-card">
-        <div class="rn-source">
-          <span class="rn-source-dot"></span>
-          ${a.source || 'Financial News'}
-        </div>
-        <div class="rn-title"><a href="${a.url}" target="_blank" rel="noopener">${a.headline}</a></div>
-        <div class="rn-summary">${summary}</div>
-        <div class="rn-footer">
-          <span class="rn-time">${timeAgo}</span>
-          <a href="${a.url}" target="_blank" rel="noopener" class="rn-link">Read full article →</a>
-        </div>
-      </div>`;
-    }).join('');
+      // Check if keywords match
+      const keywordMatch = config.keywordsInclude &&
+        config.keywordsInclude.some(k =>
+          (a.headline || '').toLowerCase().includes(k.toLowerCase()) ||
+          (a.summary  || '').toLowerCase().includes(k.toLowerCase())
+        );
+
+      return sourceMatch || keywordMatch;
+    });
+
+    // Fallback to general news if not enough Canadian results
+    if (filtered.length < 3 && config.fallback) {
+      filtered = articles.filter(a => a.headline && a.url).slice(0, 8);
+    }
+
+    filtered = filtered.slice(0, 8);
+
+    if (filtered.length === 0) throw new Error('No matching articles');
+
+    list.innerHTML = `
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;gap:6px">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span>
+        ${filtered.length} articles — ${config.label} — Live from Finnhub News
+      </div>
+      ${filtered.map(a => buildNewsCard(a)).join('')}`;
 
     loading.style.display = 'none';
     list.style.display    = 'block';
@@ -786,8 +868,52 @@ async function loadRealNews() {
   } catch(e) {
     loading.style.display = 'none';
     error.style.display   = 'block';
-    console.warn('News fetch failed:', e);
+    error.innerHTML = `<div style="font-size:24px;margin-bottom:8px">⚠️</div><div style="font-size:13px;color:var(--text3)">${config.noResultsMsg || 'Could not load news — try refreshing'}</div>`;
   }
+}
+
+function buildNewsCard(a) {
+  const timeAgo = getTimeAgo(a.datetime * 1000);
+  const summary = a.summary ? (a.summary.length > 200 ? a.summary.slice(0, 200) + '...' : a.summary) : '';
+  return `<div class="real-news-card">
+    <div class="rn-source">
+      <span class="rn-source-dot"></span>
+      ${a.source || 'Financial News'}
+    </div>
+    <div class="rn-title"><a href="${a.url}" target="_blank" rel="noopener">${a.headline}</a></div>
+    ${summary ? `<div class="rn-summary">${summary}</div>` : ''}
+    <div class="rn-footer">
+      <span class="rn-time">${timeAgo}</span>
+      <a href="${a.url}" target="_blank" rel="noopener" class="rn-link">Read full article →</a>
+    </div>
+  </div>`;
+}
+
+function buildFrenchSourcesPanel() {
+  const sources = [
+    { name:'Les Affaires', url:'https://www.lesaffaires.com', desc:'Actualités économiques et financières québécoises', icon:'📊' },
+    { name:'Finance et Investissement', url:'https://www.finance-investissement.com', desc:'Actualités pour les conseillers financiers', icon:'💼' },
+    { name:'Radio-Canada Économie', url:'https://ici.radio-canada.ca/sections/economie', desc:'Nouvelles économiques de Radio-Canada', icon:'📻' },
+    { name:'La Presse Affaires', url:'https://www.lapresse.ca/affaires', desc:'Section affaires du quotidien La Presse', icon:'📰' },
+    { name:'Le Devoir Économie', url:'https://www.ledevoir.com/economie', desc:'Analyses économiques approfondies', icon:'🗞️' },
+    { name:'Journal de Montréal Finances', url:'https://www.journaldemontreal.com/finances', desc:'Nouvelles financières en français', icon:'💰' },
+  ];
+
+  return `
+    <div style="background:rgba(59,158,255,0.06);border:1px solid rgba(59,158,255,0.2);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px;font-size:13px;color:var(--text2);line-height:1.6">
+      <strong style="color:var(--text)">📡 Nouvelles financières en français</strong><br>
+      Finnhub News couvre principalement les sources anglophones. Voici les meilleures sources québécoises pour les nouvelles financières en français :
+    </div>
+    ${sources.map(s => `
+      <div class="real-news-card" style="cursor:pointer" onclick="window.open('${s.url}','_blank')">
+        <div class="rn-source"><span class="rn-source-dot"></span>${s.icon} Source externe vérifiée</div>
+        <div class="rn-title" style="font-size:15px">${s.name}</div>
+        <div class="rn-summary">${s.desc}</div>
+        <div class="rn-footer">
+          <span class="rn-time">🇨🇦 Québec · Français</span>
+          <span class="rn-link">Visiter le site →</span>
+        </div>
+      </div>`).join('')}`;
 }
 
 function getTimeAgo(ts) {
@@ -799,8 +925,8 @@ function getTimeAgo(ts) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-// Load real news on page load
-loadRealNews();
+// Load US news by default on page load
+loadRealNews('us');
 </script>
 
 </body>
