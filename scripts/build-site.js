@@ -8,7 +8,7 @@ import path from 'path';
 
 const distDir  = path.join(process.cwd(), 'dist');
 const dataFile = path.join(distDir, 'data', 'daily.json');
-const tmplFile = path.join(process.cwd(), 'index.template.html');
+const tmplFile = path.join(process.cwd(), 'index.html');
 
 function fmt(n, dec = 2) {
   if (!n && n !== 0) return '—';
@@ -138,7 +138,7 @@ function main() {
     process.exit(1);
   }
   if (!fs.existsSync(tmplFile)) {
-    console.error('❌ templates/index.template.html not found');
+    console.error('❌ index.html not found');
     process.exit(1);
   }
 
