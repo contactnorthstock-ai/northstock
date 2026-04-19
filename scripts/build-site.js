@@ -8,7 +8,7 @@ import path from 'path';
 
 const distDir  = path.join(process.cwd(), 'dist');
 const dataFile = path.join(distDir, 'data', 'daily.json');
-const tmplFile = path.join(process.cwd(), 'templates', 'index.template.html');
+const tmplFile = path.join(process.cwd(), 'index.template.html');
 
 function fmt(n, dec = 2) {
   if (!n && n !== 0) return '—';
@@ -164,7 +164,7 @@ function main() {
   console.log('✅ index.html built successfully');
 
   // Copy portfolio page as-is
-  const portfolioSrc = path.join(process.cwd(), 'templates', 'northstock-portfolio-live.html');
+  const portfolioSrc = path.join(process.cwd(), 'northstock-portfolio-live.html');
   if (fs.existsSync(portfolioSrc)) {
     fs.copyFileSync(portfolioSrc, path.join(distDir, 'northstock-portfolio-live.html'));
     console.log('✅ Portfolio page copied');
