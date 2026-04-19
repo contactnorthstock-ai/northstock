@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Detail — NorthStock</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--navy:#06111f;--navy2:#0d1f3c;--blue:#3b9eff;--blue2:#1a7fe0;--green:#22c55e;--red:#ef4444;--gold:#f59e0b;--purple:#a78bfa;--text:#f0f4f8;--text2:#8ea4bc;--text3:#4d6278;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--card:rgba(255,255,255,0.04);--card2:rgba(255,255,255,0.07);--radius:10px;--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:var(--font);background:var(--navy);color:var(--text)}
+nav{background:var(--navy2);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.logo{font-size:19px;font-weight:600;letter-spacing:-.4px;cursor:pointer}.logo span{color:var(--blue)}
+.nav-links{display:flex;gap:2px}.nav-links a{color:var(--text2);font-size:13px;padding:6px 11px;border-radius:6px;cursor:pointer;transition:all .15s}.nav-links a:hover{color:var(--text);background:var(--card2)}.nav-links a.ptab{color:var(--blue)}
+.nav-right{display:flex;gap:8px}.btn-ghost{font-size:12px;padding:6px 12px;border-radius:6px;border:1px solid var(--border);color:var(--text2);cursor:pointer;background:transparent}.btn-primary{font-size:12px;padding:6px 14px;border-radius:6px;border:none;background:var(--blue);color:#fff;cursor:pointer;font-weight:500}
+.page{max-width:1100px;margin:0 auto;padding:28px 32px}
+.breadcrumb{font-size:12px;color:var(--text3);margin-bottom:16px;cursor:pointer}.breadcrumb:hover{color:var(--blue)}
+.stock-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:16px}
+.stock-info h1{font-size:28px;font-weight:600;letter-spacing:-.4px;margin-bottom:4px}
+.stock-sym{font-size:14px;font-family:var(--mono);color:var(--text2)}
+.stock-price-block{text-align:right}
+.big-price{font-size:36px;font-weight:600;font-family:var(--mono)}
+.price-change{font-size:15px;font-family:var(--mono);margin-top:3px}
+.price-change.up{color:var(--green)}.price-change.dn{color:var(--red)}
+.stock-actions{display:flex;gap:8px;margin-top:12px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.chart-title{font-size:13px;font-weight:500;color:var(--text2)}
+.period-tabs{display:flex;gap:4px}
+.period-tab{font-size:11px;padding:4px 10px;border-radius:5px;border:1px solid var(--border);color:var(--text3);cursor:pointer;background:transparent;transition:all .15s}
+.period-tab.active{background:var(--card2);color:var(--text);border-color:var(--border2)}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.stat-label{font-size:11px;color:var(--text3);margin-bottom:5px}
+.stat-val{font-size:15px;font-weight:500;font-family:var(--mono)}
+.stat-val.up{color:var(--green)}.stat-val.dn{color:var(--red)}.stat-val.gold{color:var(--gold)}
+.two-col{display:grid;grid-template-columns:1fr 320px;gap:18px}
+.section-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:18px}
+.section-title{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px}
+.news-item{padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer}.news-item:last-child{border-bottom:none}.news-item:hover .news-title{color:var(--blue)}
+.news-meta{display:flex;gap:8px;margin-bottom:5px;font-size:11px;color:var(--text3)}
+.news-title{font-size:13px;font-weight:500;line-height:1.4;transition:color .15s}
+.about-text{font-size:13px;color:var(--text2);line-height:1.7}
+.info-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}.info-row:last-child{border-bottom:none}.info-label{color:var(--text3)}.info-val{font-family:var(--mono);color:var(--text)}
+.add-btn{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);transition:background .15s}.add-btn:hover{background:var(--blue2)}
+.watch-btn{background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:var(--font);transition:all .15s}.watch-btn:hover{border-color:var(--text3);color:var(--text)}
+.loading{text-align:center;padding:60px;color:var(--text3)}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo" onclick="location.href='index.html'">North<span>Stock</span></div>
+  <div class="nav-links">
+    <a onclick="location.href='index.html'">News</a>
+    <a onclick="location.href='earnings.html'">Earnings Calendar</a>
+    <a onclick="location.href='screener.html'">Screener</a>
+    <a onclick="location.href='dividends.html'">Dividends</a>
+    <a class="ptab" onclick="location.href='portfolio.html'">My Portfolio</a>
+  </div>
+  <div class="nav-right" id="navRight">
+    <button class="btn-ghost" onclick="location.href='index.html'">Sign in</button>
+    <button class="btn-primary" onclick="location.href='index.html'">Create account</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="breadcrumb" onclick="history.back()">← Back to results</div>
+  <div id="stockContent"><div class="loading">Loading stock data...</div></div>
+</div>
+
+<script>
+const FKEY='d7i3grhr01qu8vfn7qdgd7i3grhr01qu8vfn7qe0';
+const CIDS={'BTC':'bitcoin','ETH':'ethereum','SOL':'solana','XRP':'ripple','ADA':'cardano','DOGE':'dogecoin','AVAX':'avalanche-2','MATIC':'matic-network','DOT':'polkadot','LINK':'chainlink','LTC':'litecoin'};
+
+const STOCK_DATA={
+  'NVDA':{name:'Nvidia Corporation',sector:'Technology',exch:'NASDAQ',mktcap:'2.19T',pe:65,eps:13.73,div:0.03,yield:0.03,week52h:974,week52l:462,about:'NVIDIA Corporation designs and manufactures graphics, networking and compute & storage solutions. The company operates through two segments: Graphics, and Compute & Networking.'},
+  'AAPL':{name:'Apple Inc.',sector:'Technology',exch:'NASDAQ',mktcap:'3.28T',pe:33,eps:6.43,div:1.00,yield:0.5,week52h:237,week52l:164,about:'Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide. It also sells various related services.'},
+  'SHOP.TO':{name:'Shopify Inc.',sector:'Technology',exch:'TSX',mktcap:'150B',pe:52,eps:2.27,div:0,yield:0,week52h:148,week52l:84,about:'Shopify Inc. provides a commerce platform and services in Canada, the United States, Europe, the Middle East, Africa, the Asia Pacific, and Latin America.'},
+  'RY.TO':{name:'Royal Bank of Canada',sector:'Financials',exch:'TSX',mktcap:'245B',pe:13,eps:13.40,div:5.68,yield:3.8,week52h:178,week52l:148,about:'Royal Bank of Canada operates as a diversified financial service company worldwide. It operates through five segments: Personal & Commercial Banking, Wealth Management, Insurance, City National, and Capital Markets.'},
+  'ENB.TO':{name:'Enbridge Inc.',sector:'Energy',exch:'TSX',mktcap:'120B',pe:18,eps:3.24,div:3.95,yield:6.8,week52h:62,week52l:46,about:'Enbridge Inc. operates as an energy infrastructure company. The company operates through five segments: Liquids Pipelines, Gas Transmission and Midstream, Gas Distribution and Storage, Renewable Power Generation, and Energy Services.'},
+  'BTC':{name:'Bitcoin',sector:'Cryptocurrency',exch:'Crypto',mktcap:'1.66T',pe:0,eps:0,div:0,yield:0,week52h:108000,week52l:52000,about:'Bitcoin is the first decentralized cryptocurrency. It operates on a peer-to-peer network and enables direct transactions without intermediaries. Created by Satoshi Nakamoto in 2009.'},
+  'ETH':{name:'Ethereum',sector:'Cryptocurrency',exch:'Crypto',mktcap:'382B',pe:0,eps:0,div:0,yield:0,week52h:4200,week52l:1500,about:'Ethereum is a decentralized, open-source blockchain platform featuring smart contract functionality. Ether is the native cryptocurrency of the platform.'},
+  'MSFT':{name:'Microsoft Corporation',sector:'Technology',exch:'NASDAQ',mktcap:'3.11T',pe:37,eps:11.29,div:3.32,yield:0.8,week52h:468,week52l:388,about:'Microsoft Corporation develops and supports software, services, devices, and solutions. Products include Windows, Azure cloud services, Office 365, LinkedIn, and Xbox.'},
+  'AMZN':{name:'Amazon.com Inc.',sector:'Consumer',exch:'NASDAQ',mktcap:'2.09T',pe:44,eps:4.44,div:0,yield:0,week52h:242,week52l:151,about:'Amazon.com operates as a technology and retail company. It operates through e-commerce, cloud computing (AWS), digital streaming, and artificial intelligence segments.'},
+  'TD.TO':{name:'TD Bank',sector:'Financials',exch:'TSX',mktcap:'148B',pe:11,eps:7.49,div:4.08,yield:4.9,week52h:91,week52l:74,about:'The Toronto-Dominion Bank, together with its subsidiaries, provides various financial and banking services in Canada and the United States.'},
+};
+
+const sym = new URLSearchParams(window.location.search).get('s') || 'NVDA';
+const info = STOCK_DATA[sym] || {name:sym,sector:'—',exch:'—',mktcap:'—',pe:0,eps:0,div:0,yield:0,week52h:0,week52l:0,about:'Detailed information not available for this symbol yet.'};
+
+let priceChart = null;
+
+async function fetchPrice(s){
+  const isCrypto=!!CIDS[s];
+  if(isCrypto){try{const id=CIDS[s];const r=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true`);const d=await r.json();if(d[id])return{price:d[id].usd,pct:d[id].usd_24h_change||0};}catch(e){}}
+  if(s.endsWith('.TO')){try{for(const h of['query1','query2']){const r=await fetch(`https://${h}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s)}?interval=1d&range=1d`);const d=await r.json();const m=d?.chart?.result?.[0]?.meta;if(m?.regularMarketPrice>0){const prev=m.chartPreviousClose||m.regularMarketPrice;return{price:m.regularMarketPrice,pct:((m.regularMarketPrice-prev)/prev)*100};}}}catch(e){}}
+  try{const r=await fetch(`https://finnhub.io/api/v1/quote?symbol=${s}&token=${FKEY}`);const d=await r.json();if(d.c&&d.c>0)return{price:d.c,pct:d.dp||0};}catch(e){}
+  return null;
+}
+
+function genChart(current,period){
+  const n=period==='1W'?7:period==='1M'?30:period==='3M'?90:365;
+  const labels=[],values=[];
+  const base=current*0.85;let v=base;
+  for(let i=n;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    labels.push(d.toLocaleDateString('en-CA',{month:'short',day:'numeric'}));
+    v=v*(1+(Math.random()-0.44)*0.018);
+    if(i===0)v=current;
+    values.push(parseFloat(v.toFixed(2)));
+  }
+  return{labels,values};
+}
+
+function renderChart(price,period='1W'){
+  const ctx=document.getElementById('priceChart');
+  if(!ctx)return;
+  if(priceChart)priceChart.destroy();
+  const pts=genChart(price,period);
+  const isUp=pts.values[pts.values.length-1]>=pts.values[0];
+  priceChart=new Chart(ctx,{
+    type:'line',
+    data:{labels:pts.labels,datasets:[{label:'Price',data:pts.values,borderColor:isUp?'#22c55e':'#ef4444',backgroundColor:isUp?'rgba(34,197,94,0.06)':'rgba(239,68,68,0.06)',fill:true,tension:0.4,pointRadius:0,pointHoverRadius:4,borderWidth:2}]},
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:c=>'$'+c.parsed.y.toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2})}}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#4d6278',font:{size:10},maxTicksLimit:7}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#4d6278',font:{size:10},callback:v=>'$'+v.toLocaleString()},position:'right'}},animation:{duration:300}}
+  });
+}
+
+function setPeriod(p,btn){
+  document.querySelectorAll('.period-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const priceEl=document.getElementById('bigPrice');
+  if(priceEl){const price=parseFloat(priceEl.dataset.price);renderChart(price,p);}
+}
+
+async function init(){
+  const data=await fetchPrice(sym);
+  const price=data?.price||0;
+  const pct=data?.pct||0;
+  const isUp=pct>=0;
+
+  document.title=`${sym} — NorthStock`;
+
+  document.getElementById('stockContent').innerHTML=`
+    <div class="stock-header">
+      <div class="stock-info">
+        <h1>${info.name}</h1>
+        <div class="stock-sym">${sym} · ${info.exch} · ${info.sector}</div>
+      </div>
+      <div class="stock-price-block">
+        <div class="big-price" id="bigPrice" data-price="${price}">${price>1000?'$'+Math.round(price).toLocaleString():'$'+price.toFixed(2)}</div>
+        <div class="price-change ${isUp?'up':'dn'}">${isUp?'▲+':'▼'}${Math.abs(pct).toFixed(2)}% today</div>
+        <div class="stock-actions">
+          <button class="add-btn" onclick="location.href='portfolio.html'">+ Add to portfolio</button>
+          <button class="watch-btn">☆ Watchlist</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Price history</div>
+        <div class="period-tabs">
+          <button class="period-tab active" onclick="setPeriod('1W',this)">1W</button>
+          <button class="period-tab" onclick="setPeriod('1M',this)">1M</button>
+          <button class="period-tab" onclick="setPeriod('3M',this)">3M</button>
+          <button class="period-tab" onclick="setPeriod('1Y',this)">1Y</button>
+        </div>
+      </div>
+      <canvas id="priceChart" height="200"></canvas>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Market Cap</div><div class="stat-val">${info.mktcap}</div></div>
+      <div class="stat-card"><div class="stat-label">P/E Ratio</div><div class="stat-val">${info.pe>0?info.pe+'x':'—'}</div></div>
+      <div class="stat-card"><div class="stat-label">EPS</div><div class="stat-val">${info.eps>0?'$'+info.eps.toFixed(2):'—'}</div></div>
+      <div class="stat-card"><div class="stat-label">Dividend Yield</div><div class="stat-val ${info.yield>=4?'gold':''}">${info.yield>0?info.yield.toFixed(1)+'%':'—'}</div></div>
+      <div class="stat-card"><div class="stat-label">52W High</div><div class="stat-val up">$${info.week52h.toLocaleString()}</div></div>
+      <div class="stat-card"><div class="stat-label">52W Low</div><div class="stat-val dn">$${info.week52l.toLocaleString()}</div></div>
+      <div class="stat-card"><div class="stat-label">Annual Dividend</div><div class="stat-val">${info.div>0?'$'+info.div.toFixed(2):'—'}</div></div>
+      <div class="stat-card"><div class="stat-label">Exchange</div><div class="stat-val">${info.exch}</div></div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="section-card">
+          <div class="section-title">Recent news</div>
+          <div class="news-item"><div class="news-meta"><span>2h ago</span><span>·</span><span>${info.sector}</span></div><div class="news-title">${sym} — Analyst raises price target ahead of earnings</div></div>
+          <div class="news-item"><div class="news-meta"><span>5h ago</span><span>·</span><span>Market</span></div><div class="news-title">Sector rotation: what it means for ${info.name} investors</div></div>
+          <div class="news-item"><div class="news-meta"><span>1d ago</span><span>·</span><span>${info.sector}</span></div><div class="news-title">${sym} technical analysis: key levels to watch this week</div></div>
+          <div class="news-item"><div class="news-meta"><span>2d ago</span><span>·</span><span>Earnings</span></div><div class="news-title">Upcoming earnings preview: what analysts expect from ${info.name}</div></div>
+        </div>
+        <div class="section-card">
+          <div class="section-title">About ${info.name}</div>
+          <div class="about-text">${info.about}</div>
+        </div>
+      </div>
+      <div>
+        <div class="section-card">
+          <div class="section-title">Key statistics</div>
+          <div class="info-row"><span class="info-label">Symbol</span><span class="info-val">${sym}</span></div>
+          <div class="info-row"><span class="info-label">Exchange</span><span class="info-val">${info.exch}</span></div>
+          <div class="info-row"><span class="info-label">Sector</span><span class="info-val">${info.sector}</span></div>
+          <div class="info-row"><span class="info-label">Market Cap</span><span class="info-val">${info.mktcap}</span></div>
+          <div class="info-row"><span class="info-label">P/E Ratio</span><span class="info-val">${info.pe>0?info.pe+'x':'N/A'}</span></div>
+          <div class="info-row"><span class="info-label">EPS (TTM)</span><span class="info-val">${info.eps>0?'$'+info.eps.toFixed(2):'N/A'}</span></div>
+          <div class="info-row"><span class="info-label">Dividend</span><span class="info-val">${info.div>0?'$'+info.div.toFixed(2)+'/yr':'None'}</span></div>
+          <div class="info-row"><span class="info-label">Yield</span><span class="info-val">${info.yield>0?info.yield.toFixed(1)+'%':'—'}</span></div>
+          <div class="info-row"><span class="info-label">52W High</span><span class="info-val" style="color:var(--green)">$${info.week52h.toLocaleString()}</span></div>
+          <div class="info-row"><span class="info-label">52W Low</span><span class="info-val" style="color:var(--red)">$${info.week52l.toLocaleString()}</span></div>
+        </div>
+      </div>
+    </div>`;
+
+  renderChart(price,'1W');
+}
+
+init();
+</script>
+</body>
+</html>
