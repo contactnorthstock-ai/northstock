@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Canadian Stocks — NorthStock</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#06111f;--navy2:#0d1f3c;--blue:#3b9eff;--green:#22c55e;--red:#ef4444;--gold:#f59e0b;--purple:#a78bfa;--text:#f0f4f8;--text2:#8ea4bc;--text3:#4d6278;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--card:rgba(255,255,255,0.04);--card2:rgba(255,255,255,0.07);--radius:10px;--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--navy);color:var(--text);min-height:100vh}
+a{text-decoration:none;color:inherit}
+.ticker-bar{background:var(--navy2);border-bottom:1px solid var(--border);padding:7px 0;overflow:hidden}
+.ticker-track{display:flex;gap:36px;animation:ticker 40s linear infinite;white-space:nowrap}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ti{display:flex;gap:7px;align-items:center;font-size:11px;font-family:var(--mono)}
+.ti-sym{color:var(--text2);font-weight:500}.ti-p{color:var(--text)}
+.ti-c.up{color:var(--green)}.ti-c.dn{color:var(--red)}
+.tdot{width:3px;height:3px;border-radius:50%;background:var(--border2)}
+nav{background:var(--navy2);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.logo{font-size:19px;font-weight:600;letter-spacing:-.4px}.logo span{color:var(--blue)}
+.nav-links{display:flex;gap:2px}
+.nav-links a{color:var(--text2);font-size:13px;padding:6px 11px;border-radius:6px;transition:all .15s}
+.nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--card2)}
+.nav-right{display:flex;gap:8px}
+.btn-ghost{font-size:12px;padding:6px 12px;border-radius:6px;border:1px solid var(--border);color:var(--text2);cursor:pointer;background:transparent}
+.btn-primary{font-size:12px;padding:6px 14px;border-radius:6px;border:none;background:var(--blue);color:#fff;cursor:pointer;font-weight:500}
+.page{max-width:1200px;margin:0 auto;padding:28px 32px}
+.page-header{margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px}
+.page-header h1{font-size:26px;font-weight:600;letter-spacing:-.4px;margin-bottom:4px}
+.page-header p{font-size:13px;color:var(--text3)}
+.summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.sum-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.sum-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.sum-val{font-size:22px;font-weight:600;font-family:var(--mono)}
+.sum-val.green{color:var(--green)}.sum-val.red{color:var(--red)}.sum-val.gold{color:var(--gold)}.sum-val.blue{color:var(--blue)}
+.sum-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.filters{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+.filter-btn{font-size:12px;padding:5px 14px;border-radius:20px;border:1px solid var(--border);color:var(--text2);cursor:pointer;background:transparent;font-family:var(--font);transition:all .15s}
+.filter-btn:hover{color:var(--text)}
+.filter-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.search-box{background:var(--navy2);border:1px solid var(--border);border-radius:7px;padding:6px 14px;color:var(--text);font-size:12px;font-family:var(--font);width:200px;margin-left:auto}
+.search-box:focus{outline:none;border-color:var(--blue)}
+.search-box::placeholder{color:var(--text3)}
+.stock-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);font-weight:500;white-space:nowrap;cursor:pointer}
+thead th:hover{color:var(--text2)}
+thead th.r{text-align:right}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s;cursor:pointer}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover td{background:var(--card2)}
+td{padding:13px 16px;font-size:13px;vertical-align:middle}
+td.r{text-align:right;font-family:var(--mono);font-size:12px}
+.sym-cell{display:flex;align-items:center;gap:10px}
+.sym-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--mono);flex-shrink:0}
+.sym-name{font-size:11px;color:var(--text3)}
+.up{color:var(--green)}.dn{color:var(--red)}
+.sector-badge{font-size:10px;padding:2px 7px;border-radius:4px;background:var(--card2);color:var(--text3)}
+.bar-cell{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.mini-bar{width:60px;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.mini-fill{height:100%;border-radius:3px}
+.disclaimer{background:var(--navy2);border-top:1px solid var(--border);padding:14px 32px}
+.disclaimer p{font-size:11px;color:var(--text3);max-width:1200px;margin:0 auto}
+footer{background:var(--navy);border-top:1px solid var(--border);padding:18px 32px;display:flex;justify-content:space-between;align-items:center}
+.footer-copy{font-size:12px;color:var(--text3)}
+.footer-links{display:flex;gap:14px}
+.footer-links a{font-size:12px;color:var(--text3)}
+@media(max-width:900px){nav{padding:0 16px}.nav-links{display:none}.page{padding:18px 16px}.summary-row{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="ticker-bar"><div class="ticker-track">
+  <div class="ti"><span class="ti-sym">TSX</span><span class="ti-p">24,188</span><span class="ti-c up">▲+0.28%</span></div><div class="tdot"></div>
+  <div class="ti"><span class="ti-sym">SHOP.TO</span><span class="ti-p">$118.40</span><span class="ti-c up">▲+1.35%</span></div><div class="tdot"></div>
+  <div class="ti"><span class="ti-sym">RY.TO</span><span class="ti-p">$174.20</span><span class="ti-c up">▲+0.62%</span></div><div class="tdot"></div>
+  <div class="ti"><span class="ti-sym">ENB.TO</span><span class="ti-p">$58.30</span><span class="ti-c up">▲+0.44%</span></div><div class="tdot"></div>
+  <div class="ti"><span class="ti-sym">TSX</span><span class="ti-p">24,188</span><span class="ti-c up">▲+0.28%</span></div><div class="tdot"></div>
+  <div class="ti"><span class="ti-sym">SHOP.TO</span><span class="ti-p">$118.40</span><span class="ti-c up">▲+1.35%</span></div>
+</div></div>
+
+<nav>
+  <div class="logo">North<span>Stock</span></div>
+  <div class="nav-links">
+    <a href="index.html">News</a>
+    <a href="earnings.html">Earnings Calendar</a>
+    <a href="screener.html">Top Picks</a>
+    <a href="dividends.html">Dividends</a>
+    <a href="canadian-stocks.html" class="active">Canadian Stocks</a>
+    <a href="us-stocks.html">US Stocks</a>
+    <a href="crypto.html">Crypto</a>
+    <a href="northstock-portfolio-live.html" style="color:#3b9eff">My Portfolio</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn-ghost" onclick="window.location.href='auth.html'">Sign in</button>
+    <button class="btn-primary" onclick="window.location.href='auth.html?mode=signup'">Create account</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>🍁 Canadian Stocks</h1>
+      <p>TSX & TSX-V — Top Canadian equities for TFSA & RRSP investors</p>
+    </div>
+  </div>
+
+  <div class="summary-row">
+    <div class="sum-card"><div class="sum-label">TSX Composite</div><div class="sum-val blue">24,188</div><div class="sum-sub">▲ +0.28% today</div></div>
+    <div class="sum-card"><div class="sum-label">Top gainer</div><div class="sum-val green">SHOP.TO</div><div class="sum-sub">+1.35% today</div></div>
+    <div class="sum-card"><div class="sum-label">Biggest drop</div><div class="sum-val red">BCE.TO</div><div class="sum-sub">-0.82% today</div></div>
+    <div class="sum-card"><div class="sum-label">USD/CAD</div><div class="sum-val gold">1.384</div><div class="sum-sub">▼ -0.06%</div></div>
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="filterSector('all',this)">All</button>
+    <button class="filter-btn" onclick="filterSector('Finance',this)">Finance</button>
+    <button class="filter-btn" onclick="filterSector('Technology',this)">Technology</button>
+    <button class="filter-btn" onclick="filterSector('Energy',this)">Energy</button>
+    <button class="filter-btn" onclick="filterSector('Telecom',this)">Telecom</button>
+    <button class="filter-btn" onclick="filterSector('Industrial',this)">Industrial</button>
+    <button class="filter-btn" onclick="filterSector('Materials',this)">Materials</button>
+    <input class="search-box" type="text" placeholder="Search..." oninput="searchStocks(this.value)">
+  </div>
+
+  <div class="stock-wrap">
+    <table>
+      <thead><tr>
+        <th>Stock</th>
+        <th class="r">Price (CAD)</th>
+        <th class="r">Day chg</th>
+        <th class="r">52W chg</th>
+        <th class="r">Market cap</th>
+        <th class="r">Div yield</th>
+        <th>Sector</th>
+        <th class="r">52W range</th>
+      </tr></thead>
+      <tbody id="caBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="disclaimer"><p><strong>Disclaimer:</strong> Stock data is for informational purposes only. Not investment advice. Prices may be delayed.</p></div>
+<footer>
+  <div class="footer-copy">© 2026 NorthStock</div>
+  <div class="footer-links"><a href="index.html">News</a><a href="earnings.html">Earnings</a><a href="northstock-portfolio-live.html">Portfolio</a></div>
+</footer>
+
+<script>
+const CA_STOCKS = [
+  {sym:'SHOP.TO',name:'Shopify Inc.',price:118.40,chgDay:1.35,chg52w:38.6,mcap:'148B',divYield:0,sector:'Technology',w52l:72.10,w52h:134.20,color:'#96bf48'},
+  {sym:'RY.TO',name:'Royal Bank of Canada',price:174.20,chgDay:0.62,chg52w:12.4,mcap:'248B',divYield:3.26,sector:'Finance',w52l:143.80,w52h:184.50,color:'#003168'},
+  {sym:'TD.TO',name:'TD Bank',price:78.77,chgDay:-0.18,chg52w:-8.4,mcap:'138B',divYield:5.18,sector:'Finance',w52l:72.10,w52h:92.40,color:'#34b233'},
+  {sym:'ENB.TO',name:'Enbridge Inc.',price:58.30,chgDay:0.44,chg52w:8.2,mcap:'118B',divYield:7.82,sector:'Energy',w52l:49.20,w52h:62.80,color:'#e03e2d'},
+  {sym:'CNR.TO',name:'CN Rail',price:158.10,chgDay:0.22,chg52w:4.8,mcap:'98B',divYield:2.14,sector:'Industrial',w52l:140.20,w52h:174.30,color:'#d52b1e'},
+  {sym:'CNQ.TO',name:'Canadian Natural Resources',price:50.44,chgDay:1.12,chg52w:6.2,mcap:'84B',divYield:4.52,sector:'Energy',w52l:43.10,w52h:58.20,color:'#003366'},
+  {sym:'BMO.TO',name:'Bank of Montreal',price:118.80,chgDay:0.38,chg52w:2.1,mcap:'92B',divYield:5.22,sector:'Finance',w52l:104.20,w52h:134.60,color:'#0075be'},
+  {sym:'BNS.TO',name:'Scotiabank',price:72.40,chgDay:0.14,chg52w:-2.8,mcap:'88B',divYield:6.18,sector:'Finance',w52l:64.30,w52h:82.10,color:'#cc0000'},
+  {sym:'SU.TO',name:'Suncor Energy',price:50.44,chgDay:1.12,chg52w:14.2,mcap:'64B',divYield:4.52,sector:'Energy',w52l:40.20,w52h:58.40,color:'#e83f2d'},
+  {sym:'ATD.TO',name:'Alimentation Couche-Tard',price:72.80,chgDay:0.44,chg52w:8.4,mcap:'78B',divYield:0.88,sector:'Industrial',w52l:62.10,w52h:84.20,color:'#e83f2d'},
+  {sym:'CP.TO',name:'Canadian Pacific Kansas City',price:108.40,chgDay:0.28,chg52w:6.8,mcap:'72B',divYield:0.74,sector:'Industrial',w52l:94.20,w52h:124.80,color:'#d52b1e'},
+  {sym:'MFC.TO',name:'Manulife Financial',price:38.86,chgDay:0.52,chg52w:18.4,mcap:'76B',divYield:4.12,sector:'Finance',w52l:28.40,w52h:42.10,color:'#007744'},
+  {sym:'T.TO',name:'TELUS Corporation',price:22.05,chgDay:-0.18,chg52w:-8.2,mcap:'32B',divYield:7.21,sector:'Telecom',w52l:19.80,w52h:26.40,color:'#4b286d'},
+  {sym:'BCE.TO',name:'BCE Inc.',price:46.01,chgDay:-0.82,chg52w:-12.4,mcap:'42B',divYield:8.41,sector:'Telecom',w52l:42.10,w52h:56.80,color:'#0033a0'},
+  {sym:'ABX.TO',name:'Barrick Gold',price:18.97,chgDay:0.84,chg52w:22.4,mcap:'34B',divYield:2.11,sector:'Materials',w52l:14.20,w52h:24.80,color:'#b8960c'},
+  {sym:'WPM.TO',name:'Wheaton Precious Metals',price:82.40,chgDay:1.24,chg52w:28.4,mcap:'38B',divYield:1.04,sector:'Materials',w52l:58.20,w52h:94.80,color:'#c0c0c0'},
+  {sym:'CSU.TO',name:'Constellation Software',price:4248.00,chgDay:0.82,chg52w:28.4,mcap:'92B',divYield:0.12,sector:'Technology',w52l:3180.00,w52h:4680.00,color:'#1a5276'},
+  {sym:'TRI.TO',name:'Thomson Reuters',price:218.40,chgDay:0.42,chg52w:14.8,mcap:'62B',divYield:1.28,sector:'Technology',w52l:182.40,w52h:238.80,color:'#cc5500'},
+  {sym:'QSR.TO',name:'Restaurant Brands Intl.',price:84.20,chgDay:-0.24,chg52w:4.2,mcap:'28B',divYield:3.82,sector:'Industrial',w52l:72.10,w52h:96.40,color:'#c8102e'},
+  {sym:'IFC.TO',name:'Intact Financial',price:274.80,chgDay:0.62,chg52w:12.4,mcap:'48B',divYield:2.08,sector:'Finance',w52l:228.40,w52h:294.20,color:'#003087'},
+];
+
+let filtered = [...CA_STOCKS];
+let liveData = {}; // sym -> {price, chgDay}
+
+const FINNHUB_KEY = 'd7i3grhr01qu8vfn7qdgd7i3grhr01qu8vfn7qe0';
+
+// BATCH fetch — tous les prix en UN SEUL appel Yahoo Finance
+async function fetchBatch(symbols) {
+  try {
+    const yahooUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols.join(','))}&fields=regularMarketPrice,regularMarketChangePercent`;
+    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`);
+    const w = await r.json();
+    const d = JSON.parse(w.contents || '{}');
+    const results = {};
+    (d?.quoteResponse?.result || []).forEach(q => {
+      if (q.regularMarketPrice > 0) {
+        results[q.symbol] = {price: q.regularMarketPrice, chgDay: q.regularMarketChangePercent || 0};
+      }
+    });
+    return results;
+  } catch(e) {}
+  return {};
+}
+
+async function loadLivePrices() {
+  const badge = document.createElement('div');
+  badge.style.cssText = 'font-size:11px;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;gap:6px';
+  badge.innerHTML = '<span style="width:6px;height:6px;border-radius:50%;background:var(--blue);animation:pulse 1s infinite;display:inline-block"></span> Fetching live CAD prices...';
+  document.querySelector('.stock-wrap').before(badge);
+
+  const doFetch = async () => {
+    const prices = await fetchBatch(CA_STOCKS.map(s => s.sym)); // ONE call
+    Object.assign(liveData, prices);
+    render();
+    const n = new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
+    const cnt = CA_STOCKS.filter(s => liveData[s.sym]).length;
+    badge.innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span> ${cnt} live prices (CAD) · Updated ${n} · <span style="color:var(--text3)">Yahoo Finance</span>`;
+  };
+
+  await doFetch();
+  setInterval(doFetch, 60000);
+}
+
+function filterSector(sector, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  filtered = sector === 'all' ? [...CA_STOCKS] : CA_STOCKS.filter(s=>s.sector===sector);
+  render();
+}
+
+function searchStocks(q) {
+  const lq = q.toLowerCase();
+  filtered = CA_STOCKS.filter(s => s.sym.toLowerCase().includes(lq) || s.name.toLowerCase().includes(lq));
+  render();
+}
+
+function render() {
+  document.getElementById('caBody').innerHTML = filtered.map(s => {
+    const live = liveData[s.sym];
+    const price = live ? live.price : s.price;
+    const chgDay = live ? live.chgDay : s.chgDay;
+    const sym3 = s.sym.replace('.TO','').slice(0,4);
+    const range = s.w52h - s.w52l;
+    const pos = range > 0 ? ((price - s.w52l) / range * 100).toFixed(0) : 50;
+    const fillColor = chgDay >= 0 ? 'var(--green)' : 'var(--red)';
+    const liveIndicator = live ? '<span style="font-size:9px;color:var(--green);margin-left:4px">● live</span>' : '';
+    return `<tr onclick="window.location.href='northstock-portfolio-live.html'">
+      <td><div class="sym-cell">
+        <div class="sym-icon" style="background:${s.color}22;color:${s.color}">${sym3}</div>
+        <div><div style="font-size:13px;font-weight:600;font-family:var(--mono)">${s.sym}${liveIndicator}</div><div class="sym-name">${s.name}</div></div>
+      </div></td>
+      <td class="r" style="font-weight:500;color:${live?'var(--text)':'var(--text3)'}">$${price.toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td class="r ${chgDay>=0?'up':'dn'}">${chgDay>=0?'+':''}${chgDay.toFixed(2)}%</td>
+      <td class="r ${s.chg52w>=0?'up':'dn'}">${s.chg52w>=0?'+':''}${s.chg52w.toFixed(1)}%</td>
+      <td class="r">${s.mcap}</td>
+      <td class="r" style="color:${s.divYield>0?'var(--green)':'var(--text3)'}">${s.divYield>0?s.divYield.toFixed(2)+'%':'—'}</td>
+      <td><span class="sector-badge">${s.sector}</span></td>
+      <td class="r"><div class="bar-cell">
+        <span style="font-size:10px;color:var(--text3)">$${s.w52l}</span>
+        <div class="mini-bar"><div class="mini-fill" style="width:${Math.min(100,Math.max(0,pos))}%;background:${fillColor}"></div></div>
+        <span style="font-size:10px;color:var(--text3)">$${s.w52h}</span>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+render();
+loadLivePrices();
+</script>
+</body></html>
