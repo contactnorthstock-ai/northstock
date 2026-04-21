@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Screener — NorthStock</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#06111f;--navy2:#0d1f3c;--blue:#3b9eff;--blue2:#1a7fe0;--green:#22c55e;--red:#ef4444;--gold:#f59e0b;--purple:#a78bfa;--text:#f0f4f8;--text2:#8ea4bc;--text3:#4d6278;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--card:rgba(255,255,255,0.04);--card2:rgba(255,255,255,0.07);--radius:10px;--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--navy);color:var(--text);min-height:100vh}
+a{text-decoration:none;color:inherit}
+.ticker-bar{background:var(--navy2);border-bottom:1px solid var(--border);padding:7px 0;overflow:hidden}
+.ticker-track{display:flex;gap:36px;animation:ticker 40s linear infinite;white-space:nowrap}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ti{display:flex;gap:7px;align-items:center;font-size:11px;font-family:var(--mono)}
+.ti-sym{color:var(--text2);font-weight:500}.ti-p{color:var(--text)}
+.ti-c.up{color:var(--green)}.ti-c.dn{color:var(--red)}
+.tdot{width:3px;height:3px;border-radius:50%;background:var(--border2)}
+nav{background:var(--navy2);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.logo{font-size:19px;font-weight:600;letter-spacing:-.4px}.logo span{color:var(--blue)}
+.nav-links{display:flex;gap:2px}
+.nav-links a{color:var(--text2);font-size:13px;padding:6px 11px;border-radius:6px;transition:all .15s}
+.nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--card2)}
+.nav-right{display:flex;gap:8px}
+.btn-ghost{font-size:12px;padding:6px 12px;border-radius:6px;border:1px solid var(--border);color:var(--text2);cursor:pointer;background:transparent}
+.btn-primary{font-size:12px;padding:6px 14px;border-radius:6px;border:none;background:var(--blue);color:#fff;cursor:pointer;font-weight:500}
+.page{max-width:1200px;margin:0 auto;padding:28px 32px}
+.page-header{margin-bottom:24px}
+.page-header h1{font-size:26px;font-weight:600;letter-spacing:-.4px;margin-bottom:4px}
+.page-header p{font-size:13px;color:var(--text3)}
+
+/* PRESET TABS */
+.preset-tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+.preset-tab{padding:8px 16px;border-radius:8px;border:1px solid var(--border);color:var(--text2);font-size:13px;cursor:pointer;background:transparent;font-family:var(--font);transition:all .15s;display:flex;align-items:center;gap:6px}
+.preset-tab:hover{color:var(--text);border-color:var(--text3)}
+.preset-tab.active{background:var(--navy2);color:var(--text);border-color:var(--border2)}
+.preset-tab .pt-icon{font-size:14px}
+
+/* FILTERS PANEL */
+.filters-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+.filters-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.filter-group{}
+.filter-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.filter-select{width:100%;background:var(--navy);border:1px solid var(--border2);border-radius:7px;padding:8px 12px;color:var(--text);font-size:12px;cursor:pointer;font-family:var(--font)}
+.filter-range{display:flex;gap:6px;align-items:center}
+.range-input{flex:1;background:var(--navy);border:1px solid var(--border2);border-radius:7px;padding:7px 10px;color:var(--text);font-size:12px;font-family:var(--mono);width:0}
+.range-input::placeholder{color:var(--text3)}
+.range-sep{color:var(--text3);font-size:12px}
+.filters-actions{display:flex;gap:10px;margin-top:16px;align-items:center}
+.result-count{font-size:12px;color:var(--text3);margin-left:auto}
+
+/* STOCK TABLE */
+.stock-table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.stock-table{width:100%;border-collapse:collapse}
+.stock-table th{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);font-weight:500;cursor:pointer;white-space:nowrap}
+.stock-table th:hover{color:var(--text2)}
+.stock-table th.r{text-align:right}
+.stock-table td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+.stock-table td.r{text-align:right;font-family:var(--mono);font-size:12px}
+.stock-table tr:last-child td{border-bottom:none}
+.stock-table tr:hover td{background:var(--card2);cursor:pointer}
+.sym-cell{display:flex;align-items:center;gap:10px}
+.sym-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--mono);flex-shrink:0}
+.sym-name{font-size:11px;color:var(--text3)}
+.up{color:var(--green)}.dn{color:var(--red)}
+.score-bar{display:flex;align-items:center;gap:6px}
+.score-bg{width:50px;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px}
+.sector-badge{font-size:10px;padding:2px 8px;border-radius:4px;background:var(--card2);color:var(--text3)}
+.rec-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px}
+.rec-badge.buy{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.rec-badge.hold{background:rgba(245,158,11,.1);color:var(--gold);border:1px solid rgba(245,158,11,.2)}
+.rec-badge.sell{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+
+.disclaimer{background:var(--navy2);border-top:1px solid var(--border);padding:14px 32px}
+.disclaimer p{font-size:11px;color:var(--text3);max-width:1200px;margin:0 auto}
+footer{background:var(--navy);border-top:1px solid var(--border);padding:18px 32px;display:flex;justify-content:space-between;align-items:center}
+.footer-copy{font-size:12px;color:var(--text3)}
+.footer-links{display:flex;gap:14px}
+.footer-links a{font-size:12px;color:var(--text3)}
+@media(max-width:900px){nav{padding:0 16px}.nav-links{display:none}.page{padding:18px 16px}.filters-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<div class="ticker-bar">
+  <div class="ticker-track">
+    <div class="ti"><span class="ti-sym">S&P 500</span><span class="ti-p">5,312</span><span class="ti-c up">▲+0.42%</span></div><div class="tdot"></div>
+    <div class="ti"><span class="ti-sym">NVDA</span><span class="ti-p">$892.40</span><span class="ti-c up">▲+4.21%</span></div><div class="tdot"></div>
+    <div class="ti"><span class="ti-sym">SHOP.TO</span><span class="ti-p">$118.40</span><span class="ti-c up">▲+1.35%</span></div><div class="tdot"></div>
+    <div class="ti"><span class="ti-sym">S&P 500</span><span class="ti-p">5,312</span><span class="ti-c up">▲+0.42%</span></div><div class="tdot"></div>
+    <div class="ti"><span class="ti-sym">NVDA</span><span class="ti-p">$892.40</span><span class="ti-c up">▲+4.21%</span></div>
+  </div>
+</div>
+
+<nav>
+  <div class="logo">North<span>Stock</span></div>
+  <div class="nav-links">
+    <a href="index.html">News</a>
+    <a href="earnings.html">Earnings Calendar</a>
+    <a href="screener.html" class="active">Top Picks</a>
+    <a href="dividends.html">Dividends</a>
+    <a href="canadian-stocks.html">Canadian Stocks</a>
+    <a href="us-stocks.html">US Stocks</a>
+    <a href="crypto.html">Crypto</a>
+    <a href="northstock-portfolio-live.html" style="color:#3b9eff">My Portfolio</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn-ghost" onclick="window.location.href='auth.html'">Sign in</button>
+    <button class="btn-primary" onclick="window.location.href='auth.html?mode=signup'">Create account</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1>Stock Screener</h1>
+    <p>Filter and discover stocks across TSX, NYSE & NASDAQ</p>
+  </div>
+
+  <!-- PRESET TABS -->
+  <div class="preset-tabs">
+    <button class="preset-tab active" onclick="applyPreset('top',this)"><span class="pt-icon">🔥</span>Top picks</button>
+    <button class="preset-tab" onclick="applyPreset('growth',this)"><span class="pt-icon">📈</span>High growth</button>
+    <button class="preset-tab" onclick="applyPreset('value',this)"><span class="pt-icon">💎</span>Value stocks</button>
+    <button class="preset-tab" onclick="applyPreset('tsx',this)"><span class="pt-icon">🍁</span>TSX champions</button>
+    <button class="preset-tab" onclick="applyPreset('ai',this)"><span class="pt-icon">🤖</span>AI & Tech</button>
+    <button class="preset-tab" onclick="applyPreset('energy',this)"><span class="pt-icon">⚡</span>Energy</button>
+    <button class="preset-tab" onclick="applyPreset('dividend',this)"><span class="pt-icon">💰</span>Dividend growth</button>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters-panel">
+    <div class="filters-grid">
+      <div class="filter-group">
+        <div class="filter-label">Exchange</div>
+        <select class="filter-select" id="fExchange" onchange="applyFilters()">
+          <option value="">All exchanges</option>
+          <option value="TSX">TSX 🍁</option>
+          <option value="NASDAQ">NASDAQ</option>
+          <option value="NYSE">NYSE</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">Sector</div>
+        <select class="filter-select" id="fSector" onchange="applyFilters()">
+          <option value="">All sectors</option>
+          <option value="Technology">Technology</option>
+          <option value="Finance">Finance</option>
+          <option value="Energy">Energy</option>
+          <option value="Healthcare">Healthcare</option>
+          <option value="Consumer">Consumer</option>
+          <option value="Industrial">Industrial</option>
+          <option value="Telecom">Telecom</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">Market Cap</div>
+        <select class="filter-select" id="fMcap" onchange="applyFilters()">
+          <option value="">Any size</option>
+          <option value="mega">Mega cap ($200B+)</option>
+          <option value="large">Large cap ($10B+)</option>
+          <option value="mid">Mid cap ($2B+)</option>
+          <option value="small">Small cap</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">Analyst rating</div>
+        <select class="filter-select" id="fRating" onchange="applyFilters()">
+          <option value="">All ratings</option>
+          <option value="buy">Buy / Strong Buy</option>
+          <option value="hold">Hold</option>
+          <option value="sell">Sell</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">P/E Ratio</div>
+        <div class="filter-range">
+          <input class="range-input" type="number" id="fPeMin" placeholder="Min" oninput="applyFilters()">
+          <span class="range-sep">—</span>
+          <input class="range-input" type="number" id="fPeMax" placeholder="Max" oninput="applyFilters()">
+        </div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">Dividend yield</div>
+        <div class="filter-range">
+          <input class="range-input" type="number" id="fYieldMin" placeholder="Min %" oninput="applyFilters()">
+          <span class="range-sep">—</span>
+          <input class="range-input" type="number" id="fYieldMax" placeholder="Max %" oninput="applyFilters()">
+        </div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">52-week performance</div>
+        <select class="filter-select" id="fPerf" onchange="applyFilters()">
+          <option value="">Any</option>
+          <option value="pos">Positive YTD</option>
+          <option value="neg">Negative YTD</option>
+          <option value="new52h">Near 52-week high</option>
+          <option value="new52l">Near 52-week low</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">NorthStock score</div>
+        <select class="filter-select" id="fScore" onchange="applyFilters()">
+          <option value="">Any score</option>
+          <option value="80">Strong (80+)</option>
+          <option value="60">Good (60+)</option>
+          <option value="40">Fair (40+)</option>
+        </select>
+      </div>
+    </div>
+    <div class="filters-actions">
+      <button class="btn-primary" onclick="applyFilters()">Apply filters</button>
+      <button class="btn-ghost" onclick="resetFilters()">Reset</button>
+      <div class="result-count" id="resultCount">Showing 20 results</div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="stock-table-wrap">
+    <table class="stock-table">
+      <thead>
+        <tr>
+          <th>Stock</th>
+          <th class="r">Price</th>
+          <th class="r">Day chg</th>
+          <th class="r">52W chg</th>
+          <th class="r">P/E</th>
+          <th class="r">Mkt cap</th>
+          <th class="r">Div yield</th>
+          <th>Sector</th>
+          <th class="r">NS Score</th>
+          <th class="r">Rating</th>
+        </tr>
+      </thead>
+      <tbody id="screenBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="disclaimer"><p><strong>Disclaimer:</strong> Stock screener data is for informational purposes only. NorthStock scores are algorithmic estimates, not investment advice. Always do your own research.</p></div>
+<footer>
+  <div class="footer-copy">© 2026 NorthStock</div>
+  <div class="footer-links"><a href="index.html">News</a><a href="northstock-portfolio-live.html">Portfolio</a><a href="#">Privacy</a></div>
+</footer>
+
+<script>
+const STOCKS = [
+  {sym:'NVDA',name:'Nvidia Corp.',exchange:'NASDAQ',price:892.40,dayChg:4.21,chg52w:182.4,pe:52.1,mcap:'2.19T',mcapN:2190,divYield:0.03,sector:'Technology',score:94,rating:'buy',color:'#76b900'},
+  {sym:'AAPL',name:'Apple Inc.',exchange:'NASDAQ',price:212.50,dayChg:0.88,chg52w:14.2,pe:32.4,mcap:'3.21T',mcapN:3210,divYield:0.44,sector:'Technology',score:88,rating:'buy',color:'#555555'},
+  {sym:'MSFT',name:'Microsoft Corp.',exchange:'NASDAQ',price:418.20,dayChg:1.10,chg52w:22.8,pe:38.2,mcap:'3.11T',mcapN:3110,divYield:0.72,sector:'Technology',score:91,rating:'buy',color:'#00a4ef'},
+  {sym:'SHOP.TO',name:'Shopify Inc.',exchange:'TSX',price:118.40,dayChg:1.35,chg52w:38.6,pe:68.4,mcap:'148B',mcapN:148,divYield:0,sector:'Technology',score:82,rating:'buy',color:'#96bf48'},
+  {sym:'RY.TO',name:'Royal Bank',exchange:'TSX',price:174.20,dayChg:0.62,chg52w:12.4,pe:13.2,mcap:'248B',mcapN:248,divYield:3.26,sector:'Finance',score:85,rating:'buy',color:'#003168'},
+  {sym:'ENB.TO',name:'Enbridge Inc.',exchange:'TSX',price:58.30,dayChg:0.44,chg52w:8.2,pe:18.4,mcap:'118B',mcapN:118,divYield:7.82,sector:'Energy',score:72,rating:'hold',color:'#e03e2d'},
+  {sym:'AMZN',name:'Amazon.com',exchange:'NASDAQ',price:195.80,dayChg:0.75,chg52w:42.1,pe:44.8,mcap:'2.08T',mcapN:2080,divYield:0,sector:'Technology',score:87,rating:'buy',color:'#ff9900'},
+  {sym:'GOOGL',name:'Alphabet Inc.',exchange:'NASDAQ',price:178.40,dayChg:0.32,chg52w:28.4,pe:24.8,mcap:'2.18T',mcapN:2180,divYield:0.44,sector:'Technology',score:89,rating:'buy',color:'#4285f4'},
+  {sym:'META',name:'Meta Platforms',exchange:'NASDAQ',price:584.20,dayChg:0.88,chg52w:88.4,pe:28.4,mcap:'1.47T',mcapN:1470,divYield:0.34,sector:'Technology',score:86,rating:'buy',color:'#0082fb'},
+  {sym:'CNR.TO',name:'CN Rail',exchange:'TSX',price:158.10,dayChg:0.22,chg52w:4.8,pe:21.4,mcap:'98B',mcapN:98,divYield:2.14,sector:'Industrial',score:80,rating:'buy',color:'#d52b1e'},
+  {sym:'TD.TO',name:'TD Bank',exchange:'TSX',price:78.77,dayChg:-0.18,chg52w:-8.4,pe:10.8,mcap:'138B',mcapN:138,divYield:5.18,sector:'Finance',score:68,rating:'hold',color:'#34b233'},
+  {sym:'TSLA',name:'Tesla Inc.',exchange:'NASDAQ',price:248.80,dayChg:-1.24,chg52w:-18.4,pe:84.2,mcap:'794B',mcapN:794,divYield:0,sector:'Consumer',score:58,rating:'hold',color:'#cc0000'},
+  {sym:'INTC',name:'Intel Corp.',exchange:'NASDAQ',price:21.80,dayChg:-3.10,chg52w:-42.4,pe:null,mcap:'92B',mcapN:92,divYield:1.83,sector:'Technology',score:34,rating:'sell',color:'#0071c5'},
+  {sym:'SU.TO',name:'Suncor Energy',exchange:'TSX',price:50.44,dayChg:1.12,chg52w:14.2,pe:11.2,mcap:'64B',mcapN:64,divYield:4.52,sector:'Energy',score:76,rating:'buy',color:'#e83f2d'},
+  {sym:'ATD.TO',name:'Couche-Tard',exchange:'TSX',price:72.80,dayChg:0.44,chg52w:8.4,pe:18.8,mcap:'78B',mcapN:78,divYield:0.88,sector:'Consumer',score:84,rating:'buy',color:'#e83f2d'},
+  {sym:'CSU.TO',name:'Constellation Software',exchange:'TSX',price:4248.00,dayChg:0.82,chg52w:28.4,pe:84.2,mcap:'92B',mcapN:92,divYield:0.12,sector:'Technology',score:88,rating:'buy',color:'#1a5276'},
+  {sym:'V',name:'Visa Inc.',exchange:'NYSE',price:266.50,dayChg:0.44,chg52w:18.4,pe:30.4,mcap:'548B',mcapN:548,divYield:0.78,sector:'Finance',score:88,rating:'buy',color:'#1a1f71'},
+  {sym:'KO',name:'Coca-Cola',exchange:'NYSE',price:60.46,dayChg:0.28,chg52w:4.2,pe:22.8,mcap:'261B',mcapN:261,divYield:3.21,sector:'Consumer',score:74,rating:'hold',color:'#f40009'},
+  {sym:'XOM',name:'Exxon Mobil',exchange:'NYSE',price:102.16,dayChg:0.88,chg52w:6.8,pe:13.8,mcap:'418B',mcapN:418,divYield:3.72,sector:'Energy',score:78,rating:'hold',color:'#e4002b'},
+  {sym:'AMD',name:'Adv. Micro Devices',exchange:'NASDAQ',price:164.80,dayChg:2.14,chg52w:-18.4,pe:42.8,mcap:'268B',mcapN:268,divYield:0,sector:'Technology',score:72,rating:'hold',color:'#ed1c24'},
+];
+
+let filteredStocks = [...STOCKS];
+let liveData = {};
+
+// ═══════════════════════════════════════════════════════════════
+// NorthStock Price Engine — Stable Final
+// US stocks  → Finnhub direct  (no CORS, ~0.5 s)
+// TSX stocks → Yahoo batch via allorigins proxy (~3-5 s)
+// Crypto     → CoinGecko direct (no CORS, ~0.5 s, 24/7)
+// Refresh    → 30 s everywhere
+// Field convention: {price, pct} — consistent across all pages
+// ═══════════════════════════════════════════════════════════════
+const NS_KEY = '__FINNHUB_KEY__';
+
+// Finnhub — US stocks, parallel, no proxy
+async function ns_fetchUS(symbols) {
+  const out = {};
+  await Promise.allSettled(symbols.map(async sym => {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 5000);
+      const r = await fetch(
+        `https://finnhub.io/api/v1/quote?symbol=${sym}&token=${NS_KEY}`,
+        { signal: ctrl.signal }
+      );
+      clearTimeout(t);
+      const d = await r.json();
+      if (d && d.c > 0) out[sym] = { price: d.c, pct: d.dp || 0 };
+    } catch(e) {}
+  }));
+  return out;
+}
+
+// Yahoo Finance batch — TSX .TO stocks via allorigins proxy
+async function ns_fetchTSX(symbols) {
+  if (!symbols.length) return {};
+  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols.join(','))}&fields=regularMarketPrice,regularMarketChangePercent`;
+  const proxies = [
+    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  ];
+  for (const proxy of proxies) {
+    try {
+      const r = await fetch(proxy);
+      const raw = await r.json();
+      const text = raw.contents || (typeof raw === 'string' ? raw : JSON.stringify(raw));
+      const d = JSON.parse(text || '{}');
+      const out = {};
+      (d?.quoteResponse?.result || []).forEach(q => {
+        if (q.regularMarketPrice > 0)
+          out[q.symbol] = { price: q.regularMarketPrice, pct: q.regularMarketChangePercent || 0 };
+      });
+      if (Object.keys(out).length > 0) return out;
+    } catch(e) {}
+  }
+  return {};
+}
+
+// CoinGecko — crypto, direct, no proxy, 24/7
+async function ns_fetchCrypto(ids) {
+  const cgUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
+  const sources = [
+    () => fetch(cgUrl).then(r => r.json()),
+    () => fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(cgUrl)}`).then(r=>r.json()).then(w=>JSON.parse(w.contents||'{}')),
+    () => fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cgUrl)}`).then(r=>r.json()),
+  ];
+  for (const source of sources) {
+    try {
+      const d = await source();
+      if (d && Object.keys(d).length > 0) return d;
+    } catch(e) {}
+  }
+  return {};
+}
+
+// Universal — auto-splits US vs .TO, runs both in parallel
+async function ns_fetchAll(symbols) {
+  const us  = symbols.filter(s => !s.endsWith('.TO'));
+  const tsx = symbols.filter(s =>  s.endsWith('.TO'));
+  const [u, t] = await Promise.all([
+    us.length  ? ns_fetchUS(us)   : Promise.resolve({}),
+    tsx.length ? ns_fetchTSX(tsx) : Promise.resolve({}),
+  ]);
+  return { ...u, ...t };
+}
+
+async function loadLivePrices() {
+  const badge = document.getElementById('resultCount');
+  badge.textContent = 'Fetching live prices...';
+
+  const doFetch = async () => {
+    const prices = await ns_fetchAll(STOCKS.map(s => s.sym));
+    Object.entries(prices).forEach(([sym, d]) => { liveData[sym] = d; });
+    const n = new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
+    badge.textContent = `Showing ${filteredStocks.length} results · ${Object.keys(liveData).length} live · ${n}`;
+    renderTable();
+  };
+
+  await doFetch();
+  setInterval(doFetch, 30000);
+}
+
+function applyPreset(preset, btn) {
+  document.querySelectorAll('.preset-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  resetFilters(false);
+  if (preset === 'growth') { document.getElementById('fPerf').value = 'pos'; document.getElementById('fPeMin').value = ''; }
+  else if (preset === 'value') { document.getElementById('fPeMax').value = '20'; }
+  else if (preset === 'tsx') { document.getElementById('fExchange').value = 'TSX'; }
+  else if (preset === 'ai') { document.getElementById('fSector').value = 'Technology'; }
+  else if (preset === 'energy') { document.getElementById('fSector').value = 'Energy'; }
+  else if (preset === 'dividend') { document.getElementById('fYieldMin').value = '3'; }
+  else if (preset === 'top') { document.getElementById('fScore').value = '80'; }
+  applyFilters();
+}
+
+function applyFilters() {
+  const exch = document.getElementById('fExchange').value;
+  const sector = document.getElementById('fSector').value;
+  const rating = document.getElementById('fRating').value;
+  const peMin = parseFloat(document.getElementById('fPeMin').value) || 0;
+  const peMax = parseFloat(document.getElementById('fPeMax').value) || Infinity;
+  const yMin = parseFloat(document.getElementById('fYieldMin').value) || 0;
+  const yMax = parseFloat(document.getElementById('fYieldMax').value) || Infinity;
+  const score = parseFloat(document.getElementById('fScore').value) || 0;
+  const perf = document.getElementById('fPerf').value;
+
+  filteredStocks = STOCKS.filter(s => {
+    if (exch && s.exchange !== exch) return false;
+    if (sector && s.sector !== sector) return false;
+    if (rating && s.rating !== rating) return false;
+    if (s.pe && (s.pe < peMin || s.pe > peMax)) return false;
+    if (s.divYield < yMin || s.divYield > yMax) return false;
+    if (s.score < score) return false;
+    if (perf === 'pos' && s.chg52w <= 0) return false;
+    if (perf === 'neg' && s.chg52w >= 0) return false;
+    return true;
+  });
+
+  document.getElementById('resultCount').textContent = `Showing ${filteredStocks.length} result${filteredStocks.length!==1?'s':''}`;
+  renderTable();
+}
+
+function resetFilters(render=true) {
+  ['fExchange','fSector','fMcap','fRating','fPerf','fScore'].forEach(id => document.getElementById(id).value = '');
+  ['fPeMin','fPeMax','fYieldMin','fYieldMax'].forEach(id => document.getElementById(id).value = '');
+  filteredStocks = [...STOCKS];
+  if (render) { document.getElementById('resultCount').textContent = `Showing ${filteredStocks.length} results`; renderTable(); }
+}
+
+function renderTable() {
+  const body = document.getElementById('screenBody');
+  body.innerHTML = filteredStocks.map(s => {
+    const live = liveData[s.sym];
+    const price = live ? live.price : s.price;
+    const dayChg = live ? live.pct : s.dayChg;
+    const symShort = s.sym.replace('.TO','').slice(0,4);
+    const scoreColor = s.score >= 80 ? 'var(--green)' : s.score >= 60 ? 'var(--gold)' : 'var(--red)';
+    const liveIndicator = live ? '<span style="font-size:9px;color:var(--green);margin-left:4px">● live</span>' : '';
+    return `<tr onclick="window.location.href='northstock-portfolio-live.html'">
+      <td>
+        <div class="sym-cell">
+          <div class="sym-icon" style="background:${s.color}22;color:${s.color}">${symShort}</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;font-family:var(--mono)">${s.sym}${liveIndicator}</div>
+            <div class="sym-name">${s.name}</div>
+          </div>
+        </div>
+      </td>
+      <td class="r" style="color:${live?'var(--text)':'var(--text3)'}">$${price.toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td class="r ${dayChg>=0?'up':'dn'}">${dayChg>=0?'+':''}${dayChg.toFixed(2)}%</td>
+      <td class="r ${s.chg52w>=0?'up':'dn'}">${s.chg52w>=0?'+':''}${s.chg52w.toFixed(1)}%</td>
+      <td class="r">${s.pe ? s.pe.toFixed(1)+'x' : 'N/A'}</td>
+      <td class="r">${s.mcap}</td>
+      <td class="r" style="color:${s.divYield>0?'var(--green)':'var(--text3)'}">${s.divYield > 0 ? s.divYield.toFixed(2)+'%' : '—'}</td>
+      <td><span class="sector-badge">${s.sector}</span></td>
+      <td class="r">
+        <div class="score-bar" style="justify-content:flex-end">
+          <span style="font-size:12px;font-weight:600;font-family:var(--mono);color:${scoreColor}">${s.score}</span>
+          <div class="score-bg"><div class="score-fill" style="width:${s.score}%;background:${scoreColor}"></div></div>
+        </div>
+      </td>
+      <td class="r"><span class="rec-badge ${s.rating}">${s.rating.charAt(0).toUpperCase()+s.rating.slice(1)}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+renderTable();
+loadLivePrices();
+
+renderTable();
+loadLivePrices();
+
+renderTable();
+loadLivePrices();
+</script>
+</body>
+</html>

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>US Stocks — NorthStock</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#06111f;--navy2:#0d1f3c;--blue:#3b9eff;--green:#22c55e;--red:#ef4444;--gold:#f59e0b;--purple:#a78bfa;--text:#f0f4f8;--text2:#8ea4bc;--text3:#4d6278;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--card:rgba(255,255,255,0.04);--card2:rgba(255,255,255,0.07);--radius:10px;--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--navy);color:var(--text);min-height:100vh}
+a{text-decoration:none;color:inherit}
+.ticker-bar{background:var(--navy2);border-bottom:1px solid var(--border);padding:7px 0;overflow:hidden}
+.ticker-track{display:flex;gap:36px;animation:ticker 40s linear infinite;white-space:nowrap}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ti{display:flex;gap:7px;align-items:center;font-size:11px;font-family:var(--mono)}
+.ti-sym{color:var(--text2);font-weight:500}.ti-p{color:var(--text)}
+.ti-c.up{color:var(--green)}.ti-c.dn{color:var(--red)}
+.tdot{width:3px;height:3px;border-radius:50%;background:var(--border2)}
+nav{background:var(--navy2);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.logo{font-size:19px;font-weight:600;letter-spacing:-.4px}.logo span{color:var(--blue)}
+.nav-links{display:flex;gap:2px}
+.nav-links a{color:var(--text2);font-size:13px;padding:6px 11px;border-radius:6px;transition:all .15s}
+.nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--card2)}
+.nav-right{display:flex;gap:8px}
+.btn-ghost{font-size:12px;padding:6px 12px;border-radius:6px;border:1px solid var(--border);color:var(--text2);cursor:pointer;background:transparent}
+.btn-primary{font-size:12px;padding:6px 14px;border-radius:6px;border:none;background:var(--blue);color:#fff;cursor:pointer;font-weight:500}
+.page{max-width:1200px;margin:0 auto;padding:28px 32px}
+.page-header{margin-bottom:24px}
+.page-header h1{font-size:26px;font-weight:600;letter-spacing:-.4px;margin-bottom:4px}
+.page-header p{font-size:13px;color:var(--text3)}
+.summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.sum-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.sum-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.sum-val{font-size:22px;font-weight:600;font-family:var(--mono)}
+.sum-val.green{color:var(--green)}.sum-val.red{color:var(--red)}.sum-val.gold{color:var(--gold)}.sum-val.blue{color:var(--blue)}
+.sum-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.filters{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+.filter-btn{font-size:12px;padding:5px 14px;border-radius:20px;border:1px solid var(--border);color:var(--text2);cursor:pointer;background:transparent;font-family:var(--font);transition:all .15s}
+.filter-btn:hover{color:var(--text)}
+.filter-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.search-box{background:var(--navy2);border:1px solid var(--border);border-radius:7px;padding:6px 14px;color:var(--text);font-size:12px;font-family:var(--font);width:200px;margin-left:auto}
+.search-box:focus{outline:none;border-color:var(--blue)}
+.search-box::placeholder{color:var(--text3)}
+.stock-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);font-weight:500;white-space:nowrap}
+thead th.r{text-align:right}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s;cursor:pointer}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover td{background:var(--card2)}
+td{padding:13px 16px;font-size:13px;vertical-align:middle}
+td.r{text-align:right;font-family:var(--mono);font-size:12px}
+.sym-cell{display:flex;align-items:center;gap:10px}
+.sym-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--mono);flex-shrink:0}
+.sym-name{font-size:11px;color:var(--text3)}
+.up{color:var(--green)}.dn{color:var(--red)}
+.sector-badge{font-size:10px;padding:2px 7px;border-radius:4px;background:var(--card2);color:var(--text3)}
+.exch-badge{font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(59,158,255,0.1);color:var(--blue);margin-left:4px}
+.bar-cell{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+.mini-bar{width:60px;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.mini-fill{height:100%;border-radius:3px}
+.disclaimer{background:var(--navy2);border-top:1px solid var(--border);padding:14px 32px}
+.disclaimer p{font-size:11px;color:var(--text3);max-width:1200px;margin:0 auto}
+footer{background:var(--navy);border-top:1px solid var(--border);padding:18px 32px;display:flex;justify-content:space-between;align-items:center}
+.footer-copy{font-size:12px;color:var(--text3)}
+.footer-links{display:flex;gap:14px}
+.footer-links a{font-size:12px;color:var(--text3)}
+@media(max-width:900px){nav{padding:0 16px}.nav-links{display:none}.page{padding:18px 16px}.summary-row{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="ticker-bar"><div class="ticker-track">
+  <div class="ti"><span class="ti-sym">S&P 500</span><span class="ti-p">5,312</span><span class="ti-c up">▲+0.42%</span></div><div class="tdot"></div>
+  <div class="ti"><span class="ti-sym">NASDAQ</span><span class="ti-p">16,540</span><span class="ti-c dn">▼-0.11%</span></div><div class="tdot"></div>
+  <div class="ti"><span class="ti-sym">NVDA</span><span class="ti-p">$892.40</span><span class="ti-c up">▲+4.21%</span></div><div class="tdot"></div>
+  <div class="ti"><span class="ti-sym">AAPL</span><span class="ti-p">$212.50</span><span class="ti-c up">▲+0.88%</span></div><div class="tdot"></div>
+  <div class="ti"><span class="ti-sym">S&P 500</span><span class="ti-p">5,312</span><span class="ti-c up">▲+0.42%</span></div><div class="tdot"></div>
+  <div class="ti"><span class="ti-sym">NVDA</span><span class="ti-p">$892.40</span><span class="ti-c up">▲+4.21%</span></div>
+</div></div>
+
+<nav>
+  <div class="logo">North<span>Stock</span></div>
+  <div class="nav-links">
+    <a href="index.html">News</a>
+    <a href="earnings.html">Earnings Calendar</a>
+    <a href="screener.html">Top Picks</a>
+    <a href="dividends.html">Dividends</a>
+    <a href="canadian-stocks.html">Canadian Stocks</a>
+    <a href="us-stocks.html" class="active">US Stocks</a>
+    <a href="crypto.html">Crypto</a>
+    <a href="northstock-portfolio-live.html" style="color:#3b9eff">My Portfolio</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn-ghost" onclick="window.location.href='auth.html'">Sign in</button>
+    <button class="btn-primary" onclick="window.location.href='auth.html?mode=signup'">Create account</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1>🇺🇸 US Stocks</h1>
+    <p>NYSE & NASDAQ — Top American equities · Live prices</p>
+  </div>
+
+  <div class="summary-row">
+    <div class="sum-card"><div class="sum-label">S&P 500</div><div class="sum-val blue" id="us-sp500">5,312</div><div class="sum-sub" id="us-sp500-sub">▲ +0.42% today</div></div>
+    <div class="sum-card"><div class="sum-label">NASDAQ</div><div class="sum-val blue" id="us-nasdaq">16,540</div><div class="sum-sub" id="us-nasdaq-sub">▼ -0.11% today</div></div>
+    <div class="sum-card"><div class="sum-label">Top gainer</div><div class="sum-val green" id="us-gainer">NVDA</div><div class="sum-sub" id="us-gainer-sub">+4.21% today</div></div>
+    <div class="sum-card"><div class="sum-label">Biggest drop</div><div class="sum-val red" id="us-loser">INTC</div><div class="sum-sub" id="us-loser-sub">-3.10% today</div></div>
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="filterSector('all',this)">All</button>
+    <button class="filter-btn" onclick="filterSector('Technology',this)">Technology</button>
+    <button class="filter-btn" onclick="filterSector('Finance',this)">Finance</button>
+    <button class="filter-btn" onclick="filterSector('Healthcare',this)">Healthcare</button>
+    <button class="filter-btn" onclick="filterSector('Consumer',this)">Consumer</button>
+    <button class="filter-btn" onclick="filterSector('Energy',this)">Energy</button>
+    <button class="filter-btn" onclick="filterExchange('NASDAQ',this)">NASDAQ</button>
+    <button class="filter-btn" onclick="filterExchange('NYSE',this)">NYSE</button>
+    <input class="search-box" type="text" placeholder="Search..." oninput="searchStocks(this.value)">
+  </div>
+
+  <div class="stock-wrap">
+    <table>
+      <thead><tr>
+        <th>Stock</th>
+        <th class="r">Price (USD)</th>
+        <th class="r">Day chg</th>
+        <th class="r">52W chg</th>
+        <th class="r">P/E</th>
+        <th class="r">Market cap</th>
+        <th class="r">Div yield</th>
+        <th>Sector</th>
+        <th class="r">52W range</th>
+      </tr></thead>
+      <tbody id="usBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="disclaimer"><p><strong>Disclaimer:</strong> Stock data is for informational purposes only. Not investment advice.</p></div>
+<footer>
+  <div class="footer-copy">© 2026 NorthStock</div>
+  <div class="footer-links"><a href="index.html">News</a><a href="earnings.html">Earnings</a><a href="northstock-portfolio-live.html">Portfolio</a></div>
+</footer>
+
+<script>
+const US_STOCKS = [
+  {sym:'NVDA',name:'Nvidia Corporation',exch:'NASDAQ',price:892.40,chgDay:4.21,chg52w:182.4,pe:52.1,mcap:'2.19T',divYield:0.03,sector:'Technology',w52l:462.0,w52h:974.0,color:'#76b900'},
+  {sym:'AAPL',name:'Apple Inc.',exch:'NASDAQ',price:212.50,chgDay:0.88,chg52w:14.2,pe:32.4,mcap:'3.21T',divYield:0.44,sector:'Technology',w52l:164.1,w52h:237.2,color:'#555'},
+  {sym:'MSFT',name:'Microsoft Corp.',exch:'NASDAQ',price:418.20,chgDay:1.10,chg52w:22.8,pe:38.2,mcap:'3.11T',divYield:0.72,sector:'Technology',w52l:309.4,w52h:468.4,color:'#00a4ef'},
+  {sym:'GOOGL',name:'Alphabet Inc.',exch:'NASDAQ',price:178.40,chgDay:0.32,chg52w:28.4,pe:24.8,mcap:'2.18T',divYield:0.44,sector:'Technology',w52l:130.7,w52h:208.7,color:'#4285f4'},
+  {sym:'AMZN',name:'Amazon.com Inc.',exch:'NASDAQ',price:195.80,chgDay:0.75,chg52w:42.1,pe:44.8,mcap:'2.08T',divYield:0,sector:'Technology',w52l:122.6,w52h:228.5,color:'#ff9900'},
+  {sym:'META',name:'Meta Platforms',exch:'NASDAQ',price:584.20,chgDay:0.88,chg52w:88.4,pe:28.4,mcap:'1.47T',divYield:0.34,sector:'Technology',w52l:279.4,w52h:638.4,color:'#0082fb'},
+  {sym:'TSLA',name:'Tesla Inc.',exch:'NASDAQ',price:248.80,chgDay:-1.24,chg52w:-18.4,pe:84.2,mcap:'794B',divYield:0,sector:'Consumer',w52l:138.8,w52h:388.4,color:'#cc0000'},
+  {sym:'AMD',name:'Advanced Micro Devices',exch:'NASDAQ',price:164.80,chgDay:2.14,chg52w:-18.4,pe:42.8,mcap:'268B',divYield:0,sector:'Technology',w52l:122.7,w52h:227.3,color:'#ed1c24'},
+  {sym:'INTC',name:'Intel Corporation',exch:'NASDAQ',price:21.80,chgDay:-3.10,chg52w:-42.4,pe:null,mcap:'92B',divYield:1.83,sector:'Technology',w52l:18.5,w52h:51.3,color:'#0071c5'},
+  {sym:'V',name:'Visa Inc.',exch:'NYSE',price:266.50,chgDay:0.44,chg52w:18.4,pe:30.4,mcap:'548B',divYield:0.78,sector:'Finance',w52l:218.0,w52h:296.7,color:'#1a1f71'},
+  {sym:'MA',name:'Mastercard Inc.',exch:'NYSE',price:484.20,chgDay:0.62,chg52w:14.8,pe:38.4,mcap:'438B',divYield:0.58,sector:'Finance',w52l:388.0,w52h:528.4,color:'#eb001b'},
+  {sym:'JPM',name:'JPMorgan Chase',exch:'NYSE',price:248.40,chgDay:0.84,chg52w:42.4,pe:13.2,mcap:'698B',divYield:2.18,sector:'Finance',w52l:168.8,w52h:268.4,color:'#003087'},
+  {sym:'JNJ',name:'Johnson & Johnson',exch:'NYSE',price:146.80,chgDay:0.28,chg52w:-2.4,pe:24.8,mcap:'354B',divYield:3.38,sector:'Healthcare',w52l:130.8,w52h:168.4,color:'#d4302f'},
+  {sym:'PFE',name:'Pfizer Inc.',exch:'NYSE',price:24.64,chgDay:-0.82,chg52w:-18.4,pe:null,mcap:'138B',divYield:6.82,sector:'Healthcare',w52l:22.1,w52h:38.4,color:'#00509e'},
+  {sym:'KO',name:'Coca-Cola Co.',exch:'NYSE',price:60.46,chgDay:0.28,chg52w:4.2,pe:22.8,mcap:'261B',divYield:3.21,sector:'Consumer',w52l:52.4,w52h:68.4,color:'#f40009'},
+  {sym:'WMT',name:'Walmart Inc.',exch:'NYSE',price:94.20,chgDay:0.44,chg52w:38.4,pe:34.2,mcap:'757B',divYield:1.14,sector:'Consumer',w52l:60.8,w52h:98.4,color:'#0071ce'},
+  {sym:'XOM',name:'Exxon Mobil',exch:'NYSE',price:102.16,chgDay:0.88,chg52w:6.8,pe:13.8,mcap:'418B',divYield:3.72,sector:'Energy',w52l:88.4,w52h:128.4,color:'#e4002b'},
+  {sym:'UNH',name:'UnitedHealth Group',exch:'NYSE',price:488.40,chgDay:-0.42,chg52w:8.4,pe:22.4,mcap:'452B',divYield:1.52,sector:'Healthcare',w52l:418.0,w52h:588.4,color:'#002677'},
+  {sym:'COIN',name:'Coinbase Global',exch:'NASDAQ',price:248.80,chgDay:3.84,chg52w:88.4,pe:48.2,mcap:'62B',divYield:0,sector:'Finance',w52l:128.0,w52h:348.4,color:'#0052ff'},
+  {sym:'SPOT',name:'Spotify Technology',exch:'NYSE',price:438.40,chgDay:1.24,chg52w:128.4,pe:68.4,mcap:'84B',divYield:0,sector:'Technology',w52l:188.4,w52h:478.4,color:'#1db954'},
+];
+
+let filtered = [...US_STOCKS];
+let activeExch = "all";
+let liveData = {};
+
+// ═══════════════════════════════════════════════════════════════
+// NorthStock Price Engine — Stable Final
+// US stocks  → Finnhub direct  (no CORS, ~0.5 s)
+// TSX stocks → Yahoo batch via allorigins proxy (~3-5 s)
+// Crypto     → CoinGecko direct (no CORS, ~0.5 s, 24/7)
+// Refresh    → 30 s everywhere
+// Field convention: {price, pct} — consistent across all pages
+// ═══════════════════════════════════════════════════════════════
+const NS_KEY = '__FINNHUB_KEY__';
+
+// Finnhub — US stocks, parallel, no proxy
+async function ns_fetchUS(symbols) {
+  const out = {};
+  await Promise.allSettled(symbols.map(async sym => {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 5000);
+      const r = await fetch(
+        `https://finnhub.io/api/v1/quote?symbol=${sym}&token=${NS_KEY}`,
+        { signal: ctrl.signal }
+      );
+      clearTimeout(t);
+      const d = await r.json();
+      if (d && d.c > 0) out[sym] = { price: d.c, pct: d.dp || 0 };
+    } catch(e) {}
+  }));
+  return out;
+}
+
+// Yahoo Finance batch — TSX .TO stocks via allorigins proxy
+async function ns_fetchTSX(symbols) {
+  if (!symbols.length) return {};
+  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols.join(','))}&fields=regularMarketPrice,regularMarketChangePercent`;
+  const proxies = [
+    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  ];
+  for (const proxy of proxies) {
+    try {
+      const r = await fetch(proxy);
+      const raw = await r.json();
+      const text = raw.contents || (typeof raw === 'string' ? raw : JSON.stringify(raw));
+      const d = JSON.parse(text || '{}');
+      const out = {};
+      (d?.quoteResponse?.result || []).forEach(q => {
+        if (q.regularMarketPrice > 0)
+          out[q.symbol] = { price: q.regularMarketPrice, pct: q.regularMarketChangePercent || 0 };
+      });
+      if (Object.keys(out).length > 0) return out;
+    } catch(e) {}
+  }
+  return {};
+}
+
+// CoinGecko — crypto, direct, no proxy, 24/7
+async function ns_fetchCrypto(ids) {
+  const cgUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
+  const sources = [
+    () => fetch(cgUrl).then(r => r.json()),
+    () => fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(cgUrl)}`).then(r=>r.json()).then(w=>JSON.parse(w.contents||'{}')),
+    () => fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cgUrl)}`).then(r=>r.json()),
+  ];
+  for (const source of sources) {
+    try {
+      const d = await source();
+      if (d && Object.keys(d).length > 0) return d;
+    } catch(e) {}
+  }
+  return {};
+}
+
+// Universal — auto-splits US vs .TO, runs both in parallel
+async function ns_fetchAll(symbols) {
+  const us  = symbols.filter(s => !s.endsWith('.TO'));
+  const tsx = symbols.filter(s =>  s.endsWith('.TO'));
+  const [u, t] = await Promise.all([
+    us.length  ? ns_fetchUS(us)   : Promise.resolve({}),
+    tsx.length ? ns_fetchTSX(tsx) : Promise.resolve({}),
+  ]);
+  return { ...u, ...t };
+}
+
+function updateSummaryCards() {
+  const withData = US_STOCKS.filter(s => liveData[s.sym]);
+  if (!withData.length) return;
+  const sorted = [...withData].sort((a,b) => (liveData[b.sym].pct||0) - (liveData[a.sym].pct||0));
+  const top = sorted[0], bot = sorted[sorted.length-1];
+  const ge = document.getElementById('us-gainer');
+  const gs = document.getElementById('us-gainer-sub');
+  const le = document.getElementById('us-loser');
+  const ls = document.getElementById('us-loser-sub');
+  if (top && ge) { ge.textContent = top.sym; if(gs) gs.textContent = `+${liveData[top.sym].pct.toFixed(2)}% today`; }
+  if (bot && liveData[bot.sym].pct < 0 && le) { le.textContent = bot.sym; if(ls) ls.textContent = `${liveData[bot.sym].pct.toFixed(2)}% today`; }
+  const spy = liveData['SPY'];
+  if (spy) {
+    const el = document.getElementById('us-sp500'), sub = document.getElementById('us-sp500-sub');
+    if(el) el.textContent = '$'+spy.price.toFixed(2);
+    if(sub) { const up=spy.pct>=0; sub.innerHTML=`<span style="color:var(--${up?'green':'red'})">${up?'▲ +':'▼ '}${Math.abs(spy.pct).toFixed(2)}% today</span>`; }
+  }
+}
+
+async function loadLivePrices() {
+  const badge = document.createElement('div');
+  badge.style.cssText = 'font-size:11px;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;gap:6px';
+  badge.innerHTML = '<span style="width:6px;height:6px;border-radius:50%;background:var(--blue);animation:pulse 1s infinite;display:inline-block"></span> Fetching live prices...';
+  document.querySelector('.stock-wrap').before(badge);
+
+  const allSyms = [...US_STOCKS.map(s => s.sym), 'SPY', 'QQQ'];
+
+  const doFetch = async () => {
+    const prices = await ns_fetchAll(allSyms);
+    Object.entries(prices).forEach(([sym, d]) => { liveData[sym] = d; });
+    render();
+    updateSummaryCards();
+    const cnt = US_STOCKS.filter(s => liveData[s.sym]).length;
+    const n = new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
+    badge.innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span> ${cnt} live prices · Updated ${n}`;
+  };
+
+  await doFetch();
+  setInterval(doFetch, 30000);
+}
+
+function filterSector(sector, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  activeExch = 'all';
+  filtered = sector === 'all' ? [...US_STOCKS] : US_STOCKS.filter(s=>s.sector===sector);
+  render();
+}
+
+function filterExchange(exch, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  activeExch = exch;
+  filtered = US_STOCKS.filter(s=>s.exch===exch);
+  render();
+}
+
+function searchStocks(q) {
+  const lq = q.toLowerCase();
+  filtered = US_STOCKS.filter(s => s.sym.toLowerCase().includes(lq) || s.name.toLowerCase().includes(lq));
+  render();
+}
+
+function render() {
+  document.getElementById('usBody').innerHTML = filtered.map(s => {
+    const live = liveData[s.sym];
+    const price = live ? live.price : s.price;
+    const chgDay = live ? live.pct : s.chgDay;
+    const range = s.w52h - s.w52l;
+    const pos = Math.min(100, Math.max(0, range > 0 ? ((price - s.w52l) / range * 100) : 50));
+    const fillColor = chgDay >= 0 ? 'var(--green)' : 'var(--red)';
+    const liveTag = live ? '<span style="font-size:9px;color:var(--green);margin-left:4px">●</span>' : '';
+    return `<tr>
+      <td><div class="sym-cell">
+        <div class="sym-icon" style="background:${s.color}22;color:${s.color}">${s.sym.slice(0,4)}</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;font-family:var(--mono)">${s.sym} <span class="exch-badge">${s.exch}</span>${liveTag}</div>
+          <div class="sym-name">${s.name}</div>
+        </div>
+      </div></td>
+      <td class="r" style="font-weight:500;color:${live?'var(--text)':'var(--text3)'}">$${price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td class="r ${chgDay>=0?'up':'dn'}">${chgDay>=0?'+':''}${chgDay.toFixed(2)}%</td>
+      <td class="r ${s.chg52w>=0?'up':'dn'}">${s.chg52w>=0?'+':''}${s.chg52w.toFixed(1)}%</td>
+      <td class="r">${s.pe?s.pe.toFixed(1)+'x':'N/A'}</td>
+      <td class="r">${s.mcap}</td>
+      <td class="r" style="color:${s.divYield>0?'var(--green)':'var(--text3)'}">${s.divYield>0?s.divYield.toFixed(2)+'%':'—'}</td>
+      <td><span class="sector-badge">${s.sector}</span></td>
+      <td class="r"><div class="bar-cell">
+        <span style="font-size:10px;color:var(--text3)">$${s.w52l}</span>
+        <div class="mini-bar"><div class="mini-fill" style="width:${pos}%;background:${fillColor}"></div></div>
+        <span style="font-size:10px;color:var(--text3)">$${s.w52h}</span>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+render();
+loadLivePrices();
+
+render();
+loadLivePrices();
+
+render();
+loadLivePrices();
+</script>
+</body></html>

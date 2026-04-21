@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earnings Calendar — NorthStock</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#06111f;--navy2:#0d1f3c;--blue:#3b9eff;--blue2:#1a7fe0;--green:#22c55e;--red:#ef4444;--gold:#f59e0b;--purple:#a78bfa;--text:#f0f4f8;--text2:#8ea4bc;--text3:#4d6278;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--card:rgba(255,255,255,0.04);--card2:rgba(255,255,255,0.07);--radius:10px;--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--navy);color:var(--text);min-height:100vh}
+a{text-decoration:none;color:inherit}
+
+/* TICKER */
+.ticker-bar{background:var(--navy2);border-bottom:1px solid var(--border);padding:7px 0;overflow:hidden}
+.ticker-track{display:flex;gap:36px;animation:ticker 40s linear infinite;white-space:nowrap}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ti{display:flex;gap:7px;align-items:center;font-size:11px;font-family:var(--mono)}
+.ti-sym{color:var(--text2);font-weight:500}.ti-p{color:var(--text)}
+.ti-c.up{color:var(--green)}.ti-c.dn{color:var(--red)}
+.tdot{width:3px;height:3px;border-radius:50%;background:var(--border2)}
+
+/* NAV */
+nav{background:var(--navy2);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.logo{font-size:19px;font-weight:600;letter-spacing:-.4px}.logo span{color:var(--blue)}
+.nav-links{display:flex;gap:2px}
+.nav-links a{color:var(--text2);font-size:13px;padding:6px 11px;border-radius:6px;transition:all .15s}
+.nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--card2)}
+.nav-right{display:flex;gap:8px;align-items:center}
+.btn-ghost{font-size:12px;padding:6px 12px;border-radius:6px;border:1px solid var(--border);color:var(--text2);cursor:pointer;background:transparent}
+.btn-primary{font-size:12px;padding:6px 14px;border-radius:6px;border:none;background:var(--blue);color:#fff;cursor:pointer;font-weight:500}
+
+/* PAGE */
+.page{max-width:1200px;margin:0 auto;padding:28px 32px}
+.page-header{margin-bottom:24px}
+.page-header h1{font-size:26px;font-weight:600;letter-spacing:-.4px;margin-bottom:4px}
+.page-header p{font-size:13px;color:var(--text3)}
+
+/* FILTERS */
+.filters{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;align-items:center}
+.filter-btn{font-size:12px;padding:6px 14px;border-radius:20px;border:1px solid var(--border);color:var(--text2);cursor:pointer;background:transparent;transition:all .15s;font-family:var(--font)}
+.filter-btn:hover{color:var(--text);border-color:var(--text3)}
+.filter-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.search-input{background:var(--navy2);border:1px solid var(--border);border-radius:8px;padding:7px 14px;color:var(--text);font-size:13px;font-family:var(--font);width:220px;margin-left:auto}
+.search-input:focus{outline:none;border-color:var(--blue)}
+.search-input::placeholder{color:var(--text3)}
+
+/* WEEK TABS */
+.week-nav{display:flex;gap:8px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px}
+.week-tab{flex-shrink:0;padding:8px 18px;border-radius:8px;border:1px solid var(--border);color:var(--text2);font-size:13px;cursor:pointer;background:transparent;font-family:var(--font);transition:all .15s}
+.week-tab:hover{color:var(--text);border-color:var(--text3)}
+.week-tab.active{background:var(--navy2);color:var(--text);border-color:var(--border2)}
+.week-tab .wt-date{font-size:11px;color:var(--text3);margin-top:2px}
+.week-tab.today{border-color:var(--blue)}
+.week-tab.today .wt-label{color:var(--blue)}
+
+/* EARNINGS TABLE */
+.earnings-section{margin-bottom:32px}
+.section-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.section-date{font-size:15px;font-weight:500;color:var(--text)}
+.section-count{font-size:12px;color:var(--text3);background:var(--card2);padding:2px 10px;border-radius:20px}
+.today-badge{font-size:10px;font-weight:600;background:rgba(59,158,255,.15);color:var(--blue);border:1px solid rgba(59,158,255,.3);padding:2px 8px;border-radius:20px}
+
+.earn-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.earn-card:hover{border-color:var(--border2)}
+.earn-card.beat{border-left:3px solid var(--green)}
+.earn-card.miss{border-left:3px solid var(--red)}
+.earn-card.upcoming{border-left:3px solid var(--gold)}
+
+.earn-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr 1fr;gap:12px;align-items:center;padding:13px 18px}
+.earn-company{display:flex;align-items:center;gap:10px}
+.earn-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;font-family:var(--mono)}
+.earn-sym{font-size:13px;font-weight:600;font-family:var(--mono);color:var(--text)}
+.earn-name{font-size:11px;color:var(--text3)}
+.earn-exchange{font-size:10px;padding:2px 6px;border-radius:4px;background:var(--card2);color:var(--text3);margin-top:2px;display:inline-block}
+.earn-time{font-size:12px;color:var(--text2)}
+.earn-eps-label{font-size:10px;color:var(--text3);margin-bottom:2px}
+.earn-eps-val{font-size:13px;font-weight:500;font-family:var(--mono)}
+.earn-eps-val.beat{color:var(--green)}.earn-eps-val.miss{color:var(--red)}.earn-eps-val.est{color:var(--text2)}
+.earn-surprise{font-size:12px;font-weight:500;font-family:var(--mono)}
+.earn-surprise.pos{color:var(--green)}.earn-surprise.neg{color:var(--red)}
+.earn-rev{font-size:12px;color:var(--text2);font-family:var(--mono)}
+.earn-status{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px}
+.earn-status.beat{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.earn-status.miss{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.earn-status.upcoming{background:rgba(245,158,11,.1);color:var(--gold);border:1px solid rgba(245,158,11,.2)}
+.earn-status.inline{background:rgba(167,139,250,.1);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+
+.earn-header-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr 1fr;gap:12px;padding:8px 18px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+
+/* SUMMARY CARDS */
+.summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.sum-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.sum-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.sum-val{font-size:22px;font-weight:600;font-family:var(--mono)}
+.sum-val.green{color:var(--green)}.sum-val.red{color:var(--red)}.sum-val.gold{color:var(--gold)}.sum-val.blue{color:var(--blue)}
+.sum-sub{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* DETAIL PANEL */
+.detail-overlay{display:none;position:fixed;inset:0;background:rgba(6,17,31,.85);z-index:200;align-items:flex-start;justify-content:flex-end;padding:20px}
+.detail-overlay.open{display:flex}
+.detail-panel{background:#0d1f3c;border:1px solid var(--border2);border-radius:14px;width:440px;max-height:90vh;overflow-y:auto;padding:24px;animation:slideIn .2s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.detail-close{float:right;background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1}
+.detail-sym{font-size:24px;font-weight:600;font-family:var(--mono);color:var(--blue);margin-bottom:4px}
+.detail-name{font-size:14px;color:var(--text2);margin-bottom:20px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.detail-stat{background:var(--card);border-radius:8px;padding:12px}
+.detail-stat-label{font-size:11px;color:var(--text3);margin-bottom:4px}
+.detail-stat-val{font-size:16px;font-weight:500;font-family:var(--mono)}
+
+/* FOOTER */
+.disclaimer{background:var(--navy2);border-top:1px solid var(--border);padding:14px 32px}
+.disclaimer p{font-size:11px;color:var(--text3);max-width:1200px;margin:0 auto}
+footer{background:var(--navy);border-top:1px solid var(--border);padding:18px 32px;display:flex;justify-content:space-between;align-items:center}
+.footer-copy{font-size:12px;color:var(--text3)}
+.footer-links{display:flex;gap:14px}
+.footer-links a{font-size:12px;color:var(--text3)}
+
+@media(max-width:900px){
+  nav{padding:0 16px}.nav-links{display:none}
+  .page{padding:18px 16px}
+  .earn-row{grid-template-columns:1fr 1fr;gap:8px}
+  .earn-header-row{display:none}
+  .summary-row{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- TICKER -->
+<div class="ticker-bar">
+  <div class="ticker-track">
+    <div class="ti"><span class="ti-sym">S&P 500</span><span class="ti-p">5,312</span><span class="ti-c up">▲+0.42%</span></div><div class="tdot"></div>
+    <div class="ti"><span class="ti-sym">NASDAQ</span><span class="ti-p">16,540</span><span class="ti-c dn">▼-0.11%</span></div><div class="tdot"></div>
+    <div class="ti"><span class="ti-sym">AAPL</span><span class="ti-p">$212.50</span><span class="ti-c up">▲+0.88%</span></div><div class="tdot"></div>
+    <div class="ti"><span class="ti-sym">NVDA</span><span class="ti-p">$892.40</span><span class="ti-c up">▲+4.21%</span></div><div class="tdot"></div>
+    <div class="ti"><span class="ti-sym">BTC</span><span class="ti-p">$84,210</span><span class="ti-c up">▲+2.30%</span></div><div class="tdot"></div>
+    <div class="ti"><span class="ti-sym">S&P 500</span><span class="ti-p">5,312</span><span class="ti-c up">▲+0.42%</span></div><div class="tdot"></div>
+    <div class="ti"><span class="ti-sym">NASDAQ</span><span class="ti-p">16,540</span><span class="ti-c dn">▼-0.11%</span></div><div class="tdot"></div>
+    <div class="ti"><span class="ti-sym">AAPL</span><span class="ti-p">$212.50</span><span class="ti-c up">▲+0.88%</span></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">North<span>Stock</span></div>
+  <div class="nav-links">
+    <a href="index.html">News</a>
+    <a href="earnings.html" class="active">Earnings Calendar</a>
+    <a href="screener.html">Top Picks</a>
+    <a href="dividends.html">Dividends</a>
+    <a href="canadian-stocks.html">Canadian Stocks</a>
+    <a href="us-stocks.html">US Stocks</a>
+    <a href="crypto.html">Crypto</a>
+    <a href="northstock-portfolio-live.html" style="color:#3b9eff">My Portfolio</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn-ghost" onclick="window.location.href='auth.html'">Sign in</button>
+    <button class="btn-primary" onclick="window.location.href='auth.html?mode=signup'">Create account</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1>Earnings Calendar</h1>
+    <p>Upcoming and recent earnings reports — TSX, NYSE & NASDAQ</p>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="summary-row">
+    <div class="sum-card">
+      <div class="sum-label">This week</div>
+      <div class="sum-val blue" id="weekCount">38</div>
+      <div class="sum-sub">companies reporting</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Beat estimates</div>
+      <div class="sum-val green" id="beatCount">24</div>
+      <div class="sum-sub">reported so far</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Missed estimates</div>
+      <div class="sum-val red" id="missCount">6</div>
+      <div class="sum-sub">reported so far</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Beat rate</div>
+      <div class="sum-val gold" id="beatRate">80%</div>
+      <div class="sum-sub">this earnings season</div>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters">
+    <button class="filter-btn active" onclick="filterExchange('all',this)">All</button>
+    <button class="filter-btn" onclick="filterExchange('tsx',this)">TSX 🍁</button>
+    <button class="filter-btn" onclick="filterExchange('nasdaq',this)">NASDAQ</button>
+    <button class="filter-btn" onclick="filterExchange('nyse',this)">NYSE</button>
+    <button class="filter-btn" onclick="filterTime('bmo',this)">Before market open</button>
+    <button class="filter-btn" onclick="filterTime('amc',this)">After market close</button>
+    <input class="search-input" type="text" placeholder="Search company or ticker..." oninput="searchEarnings(this.value)">
+  </div>
+
+  <!-- WEEK NAVIGATION -->
+  <div class="week-nav" id="weekNav"></div>
+
+  <!-- EARNINGS LIST -->
+  <div id="earningsList"></div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail(event)">
+  <div class="detail-panel" id="detailPanel">
+    <button class="detail-close" onclick="document.getElementById('detailOverlay').classList.remove('open')">×</button>
+    <div class="detail-sym" id="dSym">—</div>
+    <div class="detail-name" id="dName">—</div>
+    <div class="detail-grid" id="dGrid"></div>
+    <div id="dAnalysis" style="font-size:13px;color:var(--text2);line-height:1.7;border-top:1px solid var(--border);padding-top:16px"></div>
+  </div>
+</div>
+
+<div class="disclaimer"><p><strong>Disclaimer:</strong> Earnings data is for informational purposes only. Not investment advice.</p></div>
+<footer>
+  <div class="footer-copy">© 2026 NorthStock</div>
+  <div class="footer-links"><a href="index.html">News</a><a href="northstock-portfolio-live.html">Portfolio</a><a href="#">Privacy</a></div>
+</footer>
+
+<script>
+const EARNINGS_DATA = [
+  // === APRIL 19 (TODAY) ===
+  {sym:'NFLX',name:'Netflix Inc.',exchange:'NASDAQ',date:'2026-04-19',time:'AMC',epsEst:5.67,epsAct:5.91,revEst:'9.73B',revAct:'9.98B',status:'beat',sector:'Tech',color:'#e50914'},
+  {sym:'JNJ',name:'Johnson & Johnson',exchange:'NYSE',date:'2026-04-19',time:'BMO',epsEst:2.58,epsAct:2.71,revEst:'21.8B',revAct:'22.1B',status:'beat',sector:'Healthcare',color:'#d4302f'},
+  {sym:'SLF.TO',name:'Sun Life Financial',exchange:'TSX',date:'2026-04-19',time:'BMO',epsEst:1.42,epsAct:null,revEst:'7.2B',revAct:null,status:'upcoming',sector:'Finance',color:'#facc15'},
+  // === APRIL 21 ===
+  {sym:'TSLA',name:'Tesla Inc.',exchange:'NASDAQ',date:'2026-04-21',time:'AMC',epsEst:0.48,epsAct:null,revEst:'21.3B',revAct:null,status:'upcoming',sector:'Auto',color:'#cc0000'},
+  {sym:'IBM',name:'IBM Corporation',exchange:'NYSE',date:'2026-04-21',time:'AMC',epsEst:1.77,epsAct:null,revEst:'14.5B',revAct:null,status:'upcoming',sector:'Tech',color:'#1f70c1'},
+  {sym:'MFC.TO',name:'Manulife Financial',exchange:'TSX',date:'2026-04-21',time:'BMO',epsEst:0.98,epsAct:null,revEst:'8.1B',revAct:null,status:'upcoming',sector:'Finance',color:'#007744'},
+  // === APRIL 22 ===
+  {sym:'META',name:'Meta Platforms',exchange:'NASDAQ',date:'2026-04-22',time:'AMC',epsEst:5.24,epsAct:null,revEst:'41.5B',revAct:null,status:'upcoming',sector:'Tech',color:'#0082fb'},
+  {sym:'MSFT',name:'Microsoft Corp.',exchange:'NASDAQ',date:'2026-04-22',time:'AMC',epsEst:3.18,epsAct:null,revEst:'68.5B',revAct:null,status:'upcoming',sector:'Tech',color:'#00a4ef'},
+  {sym:'BA',name:'Boeing Company',exchange:'NYSE',date:'2026-04-22',time:'BMO',epsEst:-1.52,epsAct:null,revEst:'18.4B',revAct:null,status:'upcoming',sector:'Industrial',color:'#1f406e'},
+  {sym:'ATD.TO',name:'Alimentation Couche-Tard',exchange:'TSX',date:'2026-04-22',time:'AMC',epsEst:0.72,epsAct:null,revEst:'16.3B',revAct:null,status:'upcoming',sector:'Retail',color:'#e83f2d'},
+  // === APRIL 23 ===
+  {sym:'GOOGL',name:'Alphabet Inc.',exchange:'NASDAQ',date:'2026-04-23',time:'AMC',epsEst:2.01,epsAct:null,revEst:'89.1B',revAct:null,status:'upcoming',sector:'Tech',color:'#4285f4'},
+  {sym:'AMZN',name:'Amazon.com Inc.',exchange:'NASDAQ',date:'2026-04-23',time:'AMC',epsEst:1.36,epsAct:null,revEst:'155.2B',revAct:null,status:'upcoming',sector:'Tech',color:'#ff9900'},
+  {sym:'INTC',name:'Intel Corporation',exchange:'NASDAQ',date:'2026-04-23',time:'AMC',epsEst:0.01,epsAct:null,revEst:'12.3B',revAct:null,status:'upcoming',sector:'Semiconductors',color:'#0071c5'},
+  {sym:'CNQ.TO',name:'Canadian Natural Resources',exchange:'TSX',date:'2026-04-23',time:'BMO',epsEst:1.14,epsAct:null,revEst:'9.2B',revAct:null,status:'upcoming',sector:'Energy',color:'#003366'},
+  // === APRIL 24 ===
+  {sym:'AAPL',name:'Apple Inc.',exchange:'NASDAQ',date:'2026-04-24',time:'AMC',epsEst:1.62,epsAct:null,revEst:'94.2B',revAct:null,status:'upcoming',sector:'Tech',color:'#555555'},
+  {sym:'SHOP.TO',name:'Shopify Inc.',exchange:'TSX',date:'2026-04-24',time:'BMO',epsEst:0.21,epsAct:null,revEst:'2.34B',revAct:null,status:'upcoming',sector:'E-Commerce',color:'#96bf48'},
+  {sym:'ENB.TO',name:'Enbridge Inc.',exchange:'TSX',date:'2026-04-24',time:'BMO',epsEst:0.88,epsAct:null,revEst:'14.1B',revAct:null,status:'upcoming',sector:'Energy',color:'#e03e2d'},
+  {sym:'XOM',name:'Exxon Mobil',exchange:'NYSE',date:'2026-04-24',time:'BMO',epsEst:1.76,epsAct:null,revEst:'88.5B',revAct:null,status:'upcoming',sector:'Energy',color:'#e4002b'},
+  // === APRIL 28 ===
+  {sym:'NVDA',name:'Nvidia Corporation',exchange:'NASDAQ',date:'2026-04-28',time:'AMC',epsEst:5.84,epsAct:null,revEst:'43.3B',revAct:null,status:'upcoming',sector:'Semiconductors',color:'#76b900'},
+  {sym:'TD.TO',name:'TD Bank',exchange:'TSX',date:'2026-04-28',time:'BMO',epsEst:1.88,epsAct:null,revEst:'13.4B',revAct:null,status:'upcoming',sector:'Finance',color:'#34b233'},
+  // === APRIL 29 ===
+  {sym:'RY.TO',name:'Royal Bank of Canada',exchange:'TSX',date:'2026-04-29',time:'BMO',epsEst:2.84,epsAct:null,revEst:'18.2B',revAct:null,status:'upcoming',sector:'Finance',color:'#003168'},
+  {sym:'BMO.TO',name:'Bank of Montreal',exchange:'TSX',date:'2026-04-29',time:'BMO',epsEst:2.31,epsAct:null,revEst:'8.9B',revAct:null,status:'upcoming',sector:'Finance',color:'#0075be'},
+  // === MAY 1 ===
+  {sym:'CNR.TO',name:'CN Rail',exchange:'TSX',date:'2026-05-01',time:'BMO',epsEst:1.62,epsAct:null,revEst:'4.2B',revAct:null,status:'upcoming',sector:'Transport',color:'#d52b1e'},
+  {sym:'V',name:'Visa Inc.',exchange:'NYSE',date:'2026-05-01',time:'AMC',epsEst:2.68,epsAct:null,revEst:'9.4B',revAct:null,status:'upcoming',sector:'Finance',color:'#1a1f71'},
+  // PAST - BEAT
+  {sym:'JPM',name:'JPMorgan Chase',exchange:'NYSE',date:'2026-04-14',time:'BMO',epsEst:4.61,epsAct:5.07,revEst:'43.5B',revAct:'45.3B',status:'beat',sector:'Finance',color:'#003087'},
+  {sym:'GS',name:'Goldman Sachs',exchange:'NYSE',date:'2026-04-14',time:'BMO',epsEst:12.35,epsAct:14.12,revEst:'14.5B',revAct:'15.1B',status:'beat',sector:'Finance',color:'#6ab0de'},
+  {sym:'WFC',name:'Wells Fargo',exchange:'NYSE',date:'2026-04-14',time:'BMO',epsEst:1.23,epsAct:1.39,revEst:'20.4B',revAct:'20.8B',status:'beat',sector:'Finance',color:'#d71e28'},
+  // PAST - MISS
+  {sym:'INTC',name:'Intel Corporation',exchange:'NASDAQ',date:'2026-04-10',time:'AMC',epsEst:0.10,epsAct:-0.04,revEst:'12.9B',revAct:'12.3B',status:'miss',sector:'Semiconductors',color:'#0071c5'},
+];
+
+let activeExchange = 'all';
+let activeTime = 'all';
+let searchQ = '';
+let selectedWeek = 0;
+
+function getWeekDays(offset=0) {
+  const days = [];
+  const now = new Date();
+  const day = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1) + (offset * 7));
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    days.push(d);
+  }
+  return days;
+}
+
+function fmtDate(d) { return d.toISOString().split('T')[0]; }
+function fmtDisplay(d) { return d.toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'}); }
+function isToday(d) { return fmtDate(d) === fmtDate(new Date()); }
+
+function buildWeekNav() {
+  const nav = document.getElementById('weekNav');
+  nav.innerHTML = '';
+  for (let w = -1; w <= 3; w++) {
+    const days = getWeekDays(w);
+    const mon = days[0]; const fri = days[4];
+    const btn = document.createElement('button');
+    btn.className = 'week-tab' + (w === 0 ? ' today active' : '');
+    btn.innerHTML = `<div class="wt-label">${w === -1 ? 'Last week' : w === 0 ? 'This week' : w === 1 ? 'Next week' : `Week of ${mon.toLocaleDateString('en-CA',{month:'short',day:'numeric'})}`}</div><div class="wt-date">${mon.toLocaleDateString('en-CA',{month:'short',day:'numeric'})} – ${fri.toLocaleDateString('en-CA',{month:'short',day:'numeric'})}</div>`;
+    btn.onclick = () => {
+      document.querySelectorAll('.week-tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedWeek = w;
+      renderEarnings();
+    };
+    nav.appendChild(btn);
+  }
+}
+
+function renderEarnings() {
+  const days = getWeekDays(selectedWeek);
+  const list = document.getElementById('earningsList');
+  list.innerHTML = '';
+
+  let filtered = EARNINGS_DATA.filter(e => {
+    const matchExch = activeExchange === 'all' || e.exchange.toLowerCase() === activeExchange;
+    const matchTime = activeTime === 'all' || e.time.toLowerCase() === activeTime;
+    const matchQ = !searchQ || e.sym.toLowerCase().includes(searchQ) || e.name.toLowerCase().includes(searchQ);
+    const eDate = new Date(e.date);
+    const inWeek = eDate >= days[0] && eDate <= days[6];
+    return matchExch && matchTime && matchQ && inWeek;
+  });
+
+  const byDate = {};
+  filtered.forEach(e => {
+    if (!byDate[e.date]) byDate[e.date] = [];
+    byDate[e.date].push(e);
+  });
+
+  const sortedDates = Object.keys(byDate).sort();
+  if (sortedDates.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:60px;color:var(--text3)"><div style="font-size:36px;margin-bottom:16px;opacity:.4">📅</div><div style="font-size:15px;color:var(--text2)">No earnings this period</div><div style="font-size:13px;margin-top:6px">Try another week or adjust filters</div></div>`;
+    return;
+  }
+
+  sortedDates.forEach(date => {
+    const items = byDate[date];
+    const d = new Date(date + 'T12:00:00');
+    const section = document.createElement('div');
+    section.className = 'earnings-section';
+    const todayBadge = isToday(d) ? `<span class="today-badge">TODAY</span>` : '';
+    section.innerHTML = `
+      <div class="section-header">
+        <div class="section-date">${d.toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'})}</div>
+        ${todayBadge}
+        <div class="section-count">${items.length} report${items.length!==1?'s':''}</div>
+      </div>
+      <div class="earn-header-row">
+        <div>Company</div><div>Time</div><div>EPS Est.</div><div>EPS Actual</div><div>Surprise</div><div>Revenue</div><div>Status</div>
+      </div>
+      ${items.map(e => buildEarnCard(e)).join('')}`;
+    list.appendChild(section);
+  });
+}
+
+function buildEarnCard(e) {
+  const surprise = e.epsAct !== null && e.epsEst ? ((e.epsAct - e.epsEst) / Math.abs(e.epsEst) * 100) : null;
+  const surpriseStr = surprise !== null ? `<span class="earn-surprise ${surprise>=0?'pos':'neg'}">${surprise>=0?'+':''}${surprise.toFixed(1)}%</span>` : '—';
+  const epsActStr = e.epsAct !== null ? `<div class="earn-eps-val ${e.status}">${e.epsAct >= 0 ? '$' : '-$'}${Math.abs(e.epsAct).toFixed(2)}</div>` : `<div class="earn-eps-val est">—</div>`;
+  const statusMap = {beat:'Beat ✓',miss:'Missed ✗',upcoming:'Upcoming'};
+  const timeMap = {BMO:'Pre-market',AMC:'After-hours',inline:'During market'};
+  const symShort = e.sym.replace('.TO','').slice(0,4);
+  return `<div class="earn-card ${e.status}" onclick="showDetail('${e.sym}')">
+    <div class="earn-row">
+      <div class="earn-company">
+        <div class="earn-icon" style="background:${e.color}22;color:${e.color}">${symShort}</div>
+        <div>
+          <div class="earn-sym">${e.sym}</div>
+          <div class="earn-name">${e.name}</div>
+          <div class="earn-exchange">${e.exchange}</div>
+        </div>
+      </div>
+      <div class="earn-time">${timeMap[e.time]||e.time}</div>
+      <div><div class="earn-eps-label">Estimate</div><div class="earn-eps-val est">${e.epsEst >= 0 ? '$' : '-$'}${Math.abs(e.epsEst).toFixed(2)}</div></div>
+      <div><div class="earn-eps-label">Actual</div>${epsActStr}</div>
+      <div>${surpriseStr}</div>
+      <div class="earn-rev">${e.revAct || e.revEst || '—'}</div>
+      <div><span class="earn-status ${e.status}">${statusMap[e.status]||e.status}</span></div>
+    </div>
+  </div>`;
+}
+
+function showDetail(sym) {
+  const e = EARNINGS_DATA.find(x => x.sym === sym);
+  if (!e) return;
+  document.getElementById('dSym').textContent = e.sym;
+  document.getElementById('dName').textContent = e.name;
+  const surprise = e.epsAct !== null && e.epsEst ? ((e.epsAct - e.epsEst) / Math.abs(e.epsEst) * 100) : null;
+  document.getElementById('dGrid').innerHTML = `
+    <div class="detail-stat"><div class="detail-stat-label">EPS Estimate</div><div class="detail-stat-val">$${e.epsEst.toFixed(2)}</div></div>
+    <div class="detail-stat"><div class="detail-stat-label">EPS Actual</div><div class="detail-stat-val" style="color:${e.status==='beat'?'var(--green)':e.status==='miss'?'var(--red)':'var(--text2)'}">${e.epsAct !== null ? '$'+e.epsAct.toFixed(2) : 'Pending'}</div></div>
+    <div class="detail-stat"><div class="detail-stat-label">Surprise</div><div class="detail-stat-val" style="color:${surprise>=0?'var(--green)':'var(--red)'}">${surprise !== null ? (surprise>=0?'+':'')+surprise.toFixed(1)+'%' : '—'}</div></div>
+    <div class="detail-stat"><div class="detail-stat-label">Revenue Est.</div><div class="detail-stat-val">${e.revEst || '—'}</div></div>
+    <div class="detail-stat"><div class="detail-stat-label">Revenue Act.</div><div class="detail-stat-val">${e.revAct || 'Pending'}</div></div>
+    <div class="detail-stat"><div class="detail-stat-label">Report Time</div><div class="detail-stat-val">${e.time === 'BMO' ? 'Pre-market' : 'After-hours'}</div></div>
+    <div class="detail-stat"><div class="detail-stat-label">Exchange</div><div class="detail-stat-val">${e.exchange}</div></div>
+    <div class="detail-stat"><div class="detail-stat-label">Sector</div><div class="detail-stat-val">${e.sector}</div></div>`;
+  const analyses = {
+    beat: `${e.name} beat analyst expectations this quarter. The EPS surprise of ${surprise ? (surprise>=0?'+':'')+surprise.toFixed(1)+'%' : ''} signals strong operational execution. Watch for management guidance on the next quarter — that will be the key driver for stock movement.`,
+    miss: `${e.name} missed analyst estimates this quarter. The market will focus on management's explanation and forward guidance. Misses on both EPS and revenue often lead to significant post-earnings moves.`,
+    upcoming: `${e.name} is scheduled to report on ${new Date(e.date+'T12:00:00').toLocaleDateString('en-CA',{month:'long',day:'numeric'})}. Key things to watch: guidance for next quarter, margin trends, and any commentary on macroeconomic conditions affecting the ${e.sector} sector.`
+  };
+  document.getElementById('dAnalysis').innerHTML = `<p style="color:var(--text3);font-size:11px;margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Analysis</p>${analyses[e.status]||''}`;
+  document.getElementById('detailOverlay').classList.add('open');
+}
+
+function closeDetail(e) { if (e.target === document.getElementById('detailOverlay')) document.getElementById('detailOverlay').classList.remove('open'); }
+function filterExchange(ex, btn) { activeExchange = ex; document.querySelectorAll('.filters .filter-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderEarnings(); }
+function filterTime(t, btn) { activeTime = activeTime === t ? 'all' : t; btn.classList.toggle('active'); renderEarnings(); }
+function searchEarnings(q) { searchQ = q.toLowerCase(); renderEarnings(); }
+function openAuth(mode) { window.location.href = `auth.html?mode=${mode}`; }
+
+buildWeekNav();
+renderEarnings();
+</script>
+</body>
+</html>
