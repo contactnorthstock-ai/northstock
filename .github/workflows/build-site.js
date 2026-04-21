@@ -215,6 +215,11 @@ function main() {
   });
 
   console.log(`🚀 Site ready in /dist — ${articles.length} articles, live market data`);
-}
 
+  // Ensure daily.json is accessible from the deployed site
+  const dataDestDir = path.join(distDir, 'data');
+  if (!fs.existsSync(dataDestDir)) fs.mkdirSync(dataDestDir, { recursive: true });
+  fs.writeFileSync(path.join(dataDestDir, 'daily.json'), JSON.stringify(data, null, 2));
+  console.log('✅ daily.json available at /data/daily.json');
+}
 main();
