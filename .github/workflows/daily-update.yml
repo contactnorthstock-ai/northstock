@@ -1,0 +1,73 @@
+name: NorthStock Daily Update — 5h AM Montreal
+on:
+  schedule:
+    - cron: '0 10 * * 1-5'
+    - cron: '0 11 * * 6,0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  generate-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate daily content
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: node scripts/generate-daily.js
+
+      - name: Build site
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: node scripts/build-site.js
+
+      - name: Copy data folder to dist
+        run: |
+          mkdir -p dist/data
+          if [ -f data/prices-tsx.json ]; then
+            cp data/prices-tsx.json dist/data/prices-tsx.json
+            echo "Copied prices-tsx.json to dist"
+          fi
+
+      - name: Inject Finnhub API key into HTML files
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: |
+          for f in dist/*.html; do
+            if [ -f "$f" ]; then
+              sed -i "s/__FINNHUB_KEY__/${FINNHUB_API_KEY}/g" "$f"
+            fi
+          done
+          echo "API key injected into all HTML files"
+
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
+        id: deployment
+
+      - name: Done
+        run: echo "NorthStock deployed at $(date -u '+%Y-%m-%d %H:%M UTC')"
