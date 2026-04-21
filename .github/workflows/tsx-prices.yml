@@ -1,0 +1,38 @@
+name: TSX Price Updater — Every 15 min (Market Hours)
+
+on:
+  schedule:
+    - cron: '30,45 13 * * 1-5'
+    - cron: '0,15,30,45 14,15,16,17,18,19 * * 1-5'
+    - cron: '0,15 20 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-tsx-prices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run fetch script
+        run: python3 scripts/fetch_tsx.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name "NorthStock Bot"
+          git config user.email "bot@northstock.ca"
+          git add data/prices-tsx.json
+          if git diff --staged --quiet; then
+            echo "No changes"
+          else
+            git commit -m "📈 TSX prices — $(date -u '+%Y-%m-%d %H:%M UTC')"
+            git push
+            echo "Pushed"
+          fi
