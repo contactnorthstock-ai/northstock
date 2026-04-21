@@ -200,6 +200,7 @@ function main() {
     'us-stocks.html',
     'crypto.html',
     'popular-stocks.html',
+    'stock.html',
   ];
   pages.forEach(page => {
     const src = path.join(process.cwd(), page);
