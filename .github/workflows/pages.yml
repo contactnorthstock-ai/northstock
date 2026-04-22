@@ -1,0 +1,71 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Inject Finnhub API key into ALL HTML files
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: |
+          if [ -z "$FINNHUB_API_KEY" ]; then
+            echo "ERROR: FINNHUB_API_KEY secret is not set!"
+            exit 1
+          fi
+          echo "Injecting Finnhub API key into all HTML files..."
+          COUNT=0
+          for f in *.html; do
+            if [ -f "$f" ]; then
+              if grep -q "__FINNHUB_KEY__" "$f"; then
+                sed -i "s/__FINNHUB_KEY__/${FINNHUB_API_KEY}/g" "$f"
+                echo "  Injected: $f"
+                COUNT=$((COUNT+1))
+              else
+                echo "  Skipped (no placeholder): $f"
+              fi
+            fi
+          done
+          echo "Total files with key injected: $COUNT"
+
+      - name: Verify key injection
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: |
+          echo "Verifying no __FINNHUB_KEY__ placeholders remain..."
+          if grep -l "__FINNHUB_KEY__" *.html 2>/dev/null; then
+            echo "ERROR: Some files still have __FINNHUB_KEY__ placeholder!"
+            exit 1
+          fi
+          echo "All placeholders replaced successfully"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
