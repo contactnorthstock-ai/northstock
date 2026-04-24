@@ -1,0 +1,85 @@
+{
+  "updatedAt": "2026-04-24T22:00:45Z",
+  "prices": {
+    "SHOP.TO": {
+      "price": 108.2,
+      "pct": 1.15
+    },
+    "RY.TO": {
+      "price": 177.4,
+      "pct": 0.62
+    },
+    "ENB.TO": {
+      "price": 60.8,
+      "pct": 0.44
+    },
+    "TD.TO": {
+      "price": 79.2,
+      "pct": -0.18
+    },
+    "CNR.TO": {
+      "price": 155.4,
+      "pct": 0.22
+    },
+    "ATD.TO": {
+      "price": 71.6,
+      "pct": 0.35
+    },
+    "SU.TO": {
+      "price": 52.1,
+      "pct": 1.2
+    },
+    "BNS.TO": {
+      "price": 74.8,
+      "pct": 0.14
+    },
+    "BMO.TO": {
+      "price": 120.4,
+      "pct": 0.38
+    },
+    "MFC.TO": {
+      "price": 49.8,
+      "pct": 0.62
+    },
+    "BCE.TO": {
+      "price": 31.2,
+      "pct": -0.82
+    },
+    "TRI.TO": {
+      "price": 222.6,
+      "pct": 0.42
+    },
+    "IFC.TO": {
+      "price": 278.4,
+      "pct": 0.62
+    },
+    "WCN.TO": {
+      "price": 224.8,
+      "pct": 0.28
+    },
+    "QSR.TO": {
+      "price": 82.4,
+      "pct": -0.24
+    },
+    "CP.TO": {
+      "price": 96.2,
+      "pct": 0.18
+    },
+    "TRP.TO": {
+      "price": 64.4,
+      "pct": 0.32
+    },
+    "PPL.TO": {
+      "price": 54.2,
+      "pct": 0.44
+    },
+    "CVE.TO": {
+      "price": 26.1,
+      "pct": 1.22
+    },
+    "ABX.TO": {
+      "price": 32.8,
+      "pct": 2.14
+    }
+  }
+}
