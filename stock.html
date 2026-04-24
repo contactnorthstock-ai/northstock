@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Stock Details — NorthStock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #06111f;
+  --navy2: #0d1f3c;
+  --blue: #3b9eff;
+  --green: #22c55e;
+  --red: #ef4444;
+  --gold: #f59e0b;
+  --text: #f0f4f8;
+  --text2: #8ea4bc;
+  --text3: #4d6278;
+  --border: rgba(255,255,255,0.07);
+  --card: rgba(255,255,255,0.04);
+  --card2: rgba(255,255,255,0.08);
+  --radius: 12px;
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--navy); color: var(--text); min-height: 100vh; }
+a { text-decoration: none; color: inherit; }
+
+/* NAV */
+nav { background: var(--navy2); border-bottom: 1px solid var(--border); padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
+.logo { font-size: 19px; font-weight: 600; letter-spacing: -.4px; } .logo span { color: var(--blue); }
+.nav-links { display: flex; gap: 2px; }
+.nav-links a { color: var(--text2); font-size: 13px; padding: 6px 11px; border-radius: 6px; transition: all .15s; }
+.nav-links a:hover { color: var(--text); background: var(--card2); }
+.btn-ghost { font-size: 12px; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); color: var(--text2); cursor: pointer; background: transparent; font-family: var(--font); }
+
+/* LANG TOGGLE */
+.lang-toggle { display: flex; gap: 4px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 3px; }
+.lang-btn { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 16px; border: none; cursor: pointer; background: transparent; color: var(--text2); font-family: var(--font); transition: all .15s; }
+.lang-btn.active { background: var(--blue); color: #fff; }
+
+/* PAGE */
+.page { max-width: 1100px; margin: 0 auto; padding: 28px 32px; }
+
+/* BACK */
+.back-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text2); margin-bottom: 20px; cursor: pointer; transition: color .15s; }
+.back-btn:hover { color: var(--text); }
+
+/* STOCK HEADER */
+.stock-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; }
+.stock-identity { display: flex; align-items: center; gap: 16px; }
+.stock-logo { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; font-family: var(--mono); }
+.stock-name-block h1 { font-size: 24px; font-weight: 700; letter-spacing: -.4px; }
+.stock-name-block p { font-size: 13px; color: var(--text2); margin-top: 2px; }
+.stock-badges { display: flex; gap: 6px; margin-top: 6px; }
+.badge-pill { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 10px; background: var(--card2); color: var(--text2); border: 1px solid var(--border); }
+
+.stock-price-block { text-align: right; }
+.price-main { font-size: 36px; font-weight: 700; font-family: var(--mono); letter-spacing: -1px; }
+.price-change { font-size: 16px; font-weight: 500; margin-top: 4px; font-family: var(--mono); }
+.price-change.up { color: var(--green); }
+.price-change.dn { color: var(--red); }
+.price-updated { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+/* TABS */
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.tab { font-size: 13px; font-weight: 500; padding: 10px 16px; cursor: pointer; color: var(--text2); border-bottom: 2px solid transparent; transition: all .15s; background: none; border-top: none; border-left: none; border-right: none; font-family: var(--font); }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+/* TAB CONTENT */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* CHART SECTION */
+.chart-section { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
+.chart-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.chart-title { font-size: 13px; font-weight: 500; color: var(--text2); }
+.period-btns { display: flex; gap: 4px; }
+.period-btn { font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text2); cursor: pointer; font-family: var(--mono); transition: all .15s; }
+.period-btn:hover { color: var(--text); border-color: var(--text2); }
+.period-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+
+/* STATS ROW */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+.stat-val { font-size: 18px; font-weight: 600; font-family: var(--mono); }
+.stat-val.up { color: var(--green); }
+.stat-val.dn { color: var(--red); }
+
+/* INDICATORS SECTION */
+.indicators-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.indicator-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; cursor: pointer; transition: all .2s; position: relative; }
+.indicator-card:hover { background: var(--card2); border-color: rgba(59,158,255,0.3); }
+.indicator-card.expanded { border-color: rgba(59,158,255,0.4); }
+.ind-header { display: flex; align-items: center; justify-content: space-between; }
+.ind-name { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; }
+.ind-val { font-size: 22px; font-weight: 700; font-family: var(--mono); margin: 6px 0 4px; }
+.ind-rating { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 10px; }
+.ind-rating.good { background: rgba(34,197,94,0.15); color: var(--green); }
+.ind-rating.warn { background: rgba(245,158,11,0.15); color: var(--gold); }
+.ind-rating.bad  { background: rgba(239,68,68,0.15); color: var(--red); }
+.ind-rating.neu  { background: var(--card2); color: var(--text2); }
+.ind-expand { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; display: none; }
+.indicator-card.expanded .ind-expand { display: block; }
+.ind-explain { font-size: 13px; color: var(--text2); line-height: 1.6; }
+.ind-scale { display: flex; gap: 4px; margin-top: 10px; }
+.scale-seg { height: 4px; flex: 1; border-radius: 2px; }
+.scale-marker { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #fff; background: var(--blue); position: absolute; top: -3px; transform: translateX(-50%); }
+.scale-wrap { position: relative; flex: 1; margin-top: 8px; }
+.learn-more { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--blue); margin-top: 8px; }
+.expand-icon { color: var(--text3); font-size: 14px; transition: transform .2s; }
+.indicator-card.expanded .expand-icon { transform: rotate(180deg); }
+
+/* ABOUT SECTION */
+.about-section { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+.about-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+.about-desc { font-size: 14px; color: var(--text2); line-height: 1.7; margin-bottom: 16px; }
+.about-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.about-item { }
+.about-item-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+.about-item-val { font-size: 14px; font-weight: 500; }
+
+/* NEWS SECTION */
+.news-list { display: flex; flex-direction: column; gap: 12px; }
+.news-item { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; gap: 14px; align-items: flex-start; transition: background .15s; cursor: pointer; }
+.news-item:hover { background: var(--card2); }
+.news-source-badge { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 8px; background: var(--card2); color: var(--text2); white-space: nowrap; margin-top: 2px; }
+.news-title { font-size: 14px; font-weight: 500; line-height: 1.5; margin-bottom: 4px; }
+.news-time { font-size: 11px; color: var(--text3); }
+.news-loading { color: var(--text3); font-size: 13px; padding: 20px 0; }
+
+/* HEALTH BAR */
+.health-section { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
+.health-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px; }
+.health-items { display: flex; flex-direction: column; gap: 10px; }
+.health-item { display: flex; align-items: center; justify-content: space-between; }
+.health-item-left { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.health-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* DISCLAIMER */
+.disclaimer-mini { font-size: 11px; color: var(--text3); line-height: 1.5; padding: 12px; background: var(--card); border-radius: 8px; border: 1px solid var(--border); margin-top: 20px; }
+
+@media (max-width: 768px) {
+  .page { padding: 16px; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .indicators-grid { grid-template-columns: 1fr; }
+  .about-grid { grid-template-columns: 1fr 1fr; }
+  .nav-links { display: none; }
+  .stock-header { flex-direction: column; }
+  .stock-price-block { text-align: left; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">North<span>Stock</span></div>
+  <div class="nav-links">
+    <a href="index.html">News</a>
+    <a href="earnings.html">Earnings Calendar</a>
+    <a href="screener.html">Top Picks</a>
+    <a href="dividends.html">Dividends</a>
+    <a href="canadian-stocks.html">Canadian Stocks</a>
+    <a href="us-stocks.html">US Stocks</a>
+    <a href="crypto.html">Crypto</a>
+    <a href="northstock-portfolio-live.html" style="color:var(--blue)">My Portfolio</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('en',this)">EN</button>
+      <button class="lang-btn" onclick="setLang('fr',this)">FR</button>
+    </div>
+    <button class="btn-ghost" onclick="window.location.href='auth.html'">Sign in</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="back-btn" onclick="history.back()">← <span data-en="Back" data-fr="Retour">Back</span></div>
+
+  <!-- STOCK HEADER -->
+  <div class="stock-header">
+    <div class="stock-identity">
+      <div class="stock-logo" id="stockLogo">--</div>
+      <div class="stock-name-block">
+        <h1 id="stockSym">—</h1>
+        <p id="stockName">Loading...</p>
+        <div class="stock-badges">
+          <span class="badge-pill" id="stockExchange">—</span>
+          <span class="badge-pill" id="stockSector">—</span>
+        </div>
+      </div>
+    </div>
+    <div class="stock-price-block">
+      <div class="price-main" id="stockPrice">—</div>
+      <div class="price-change" id="stockChange">—</div>
+      <div class="price-updated" id="stockUpdated" data-en="Updating..." data-fr="Mise à jour...">Updating...</div>
+    </div>
+  </div>
+
+  <!-- QUICK STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label" data-en="Open" data-fr="Ouverture">Open</div>
+      <div class="stat-val" id="statOpen">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label" data-en="Day High" data-fr="Haut du jour">Day High</div>
+      <div class="stat-val up" id="statHigh">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label" data-en="Day Low" data-fr="Bas du jour">Day Low</div>
+      <div class="stat-val dn" id="statLow">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label" data-en="Volume" data-fr="Volume">Volume</div>
+      <div class="stat-val" id="statVol">—</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('chart',this)" data-en="📈 Chart" data-fr="📈 Graphique">📈 Chart</button>
+    <button class="tab" onclick="showTab('indicators',this)" data-en="📊 Indicators" data-fr="📊 Indicateurs">📊 Indicators</button>
+    <button class="tab" onclick="showTab('news',this)" data-en="📰 News" data-fr="📰 Actualités">📰 News</button>
+    <button class="tab" onclick="showTab('about',this)" data-en="🏢 About" data-fr="🏢 À propos">🏢 About</button>
+  </div>
+
+  <!-- TAB: CHART -->
+  <div class="tab-content active" id="tab-chart">
+    <div class="chart-section">
+      <div class="chart-toolbar">
+        <span class="chart-title" id="chartTitle">Price history</span>
+        <div class="period-btns">
+          <button class="period-btn active" onclick="loadChart('1D',this)" data-en="1D" data-fr="1J">1D</button>
+          <button class="period-btn" onclick="loadChart('5D',this)" data-en="5D" data-fr="5J">5D</button>
+          <button class="period-btn" onclick="loadChart('1M',this)" data-en="1M" data-fr="1M">1M</button>
+          <button class="period-btn" onclick="loadChart('YTD',this)" data-en="YTD" data-fr="ADJ">YTD</button>
+          <button class="period-btn" onclick="loadChart('1Y',this)" data-en="1Y" data-fr="1A">1Y</button>
+          <button class="period-btn" onclick="loadChart('5Y',this)" data-en="5Y" data-fr="5A">5Y</button>
+        </div>
+      </div>
+      <div id="tradingview-widget" style="height:420px;border-radius:8px;overflow:hidden;margin-top:12px"></div>
+    </div>
+  </div>
+
+  <!-- TAB: INDICATORS -->
+  <div class="tab-content" id="tab-indicators">
+    <div class="health-section">
+      <div class="health-title" data-en="STOCK HEALTH OVERVIEW" data-fr="SANTÉ DE L'ACTION">STOCK HEALTH OVERVIEW</div>
+      <div class="health-items" id="healthItems">
+        <div style="color:var(--text3);font-size:13px">Loading...</div>
+      </div>
+    </div>
+    <div class="indicators-grid" id="indicatorsGrid">
+      <div style="color:var(--text3);font-size:13px;padding:20px">Loading indicators...</div>
+    </div>
+  </div>
+
+  <!-- TAB: NEWS -->
+  <div class="tab-content" id="tab-news">
+    <div class="news-list" id="newsList">
+      <div class="news-loading" data-en="Loading news..." data-fr="Chargement des actualités...">Loading news...</div>
+    </div>
+  </div>
+
+  <!-- TAB: ABOUT -->
+  <div class="tab-content" id="tab-about">
+    <div class="about-section">
+      <h3 id="aboutTitle">About the company</h3>
+      <p class="about-desc" id="aboutDesc">—</p>
+      <div class="about-grid" id="aboutGrid"></div>
+    </div>
+  </div>
+
+  <div class="disclaimer-mini" data-en="⚠️ NorthStock is for informational purposes only. Nothing on this page constitutes investment advice. Always do your own research before investing." data-fr="⚠️ NorthStock est à titre informatif uniquement. Rien sur cette page ne constitue un conseil en investissement. Faites toujours vos propres recherches avant d'investir.">
+    ⚠️ NorthStock is for informational purposes only. Nothing on this page constitutes investment advice.
+  </div>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────
+// API Key — injected by GitHub Actions workflow at deployment
+let NS_KEY = '__FINNHUB_KEY__';
+
+// Fallback: if key wasn't injected (deployment issue), fetch it from popular-stocks.html
+async function ensureKey() {
+  if (NS_KEY && NS_KEY !== '__FINNHUB_KEY__') return true;
+  try {
+    const r = await fetch('popular-stocks.html');
+    const html = await r.text();
+    const m = html.match(/const NS_KEY\s*=\s*['"]([a-z0-9]{40})['"]/);
+    if (m && m[1]) {
+      NS_KEY = m[1];
+      console.log('✅ Recovered API key from popular-stocks.html');
+      return true;
+    }
+  } catch(e) {
+    console.error('Could not recover API key:', e.message);
+  }
+  return false;
+}
+let currentLang = 'en';
+let currentSym = '';
+
+
+// ── STOCK DATABASE ────────────────────────────────────────────
+const STOCK_DB = {
+  'NVDA':    { name:'Nvidia Corporation', exchange:'NASDAQ', sector:'Technology', color:'#76b900', currency:'USD',
+    about_en: 'Nvidia designs graphics processing units (GPUs) and system-on-chip units. Originally focused on gaming graphics, Nvidia has become the dominant provider of AI computing chips, powering most large AI models including ChatGPT.',
+    about_fr: "Nvidia conçoit des processeurs graphiques (GPU). Initialement axée sur les jeux vidéo, Nvidia est devenue le principal fournisseur de puces IA, alimentant la plupart des grands modèles d'IA dont ChatGPT.",
+    founded:'1993', employees:'32,000', country:'USA', website:'nvidia.com' },
+  'AAPL':    { name:'Apple Inc.', exchange:'NASDAQ', sector:'Technology', color:'#555', currency:'USD',
+    about_en: 'Apple designs, manufactures and markets smartphones (iPhone), personal computers (Mac), tablets (iPad), wearables and accessories. Apple also operates digital services including the App Store, Apple Music and iCloud.',
+    about_fr: "Apple conçoit et vend des iPhone, Mac, iPad, et des accessoires connectés. L'entreprise opère aussi des services numériques comme l'App Store, Apple Music et iCloud.",
+    founded:'1976', employees:'164,000', country:'USA', website:'apple.com' },
+  'MSFT':    { name:'Microsoft Corporation', exchange:'NASDAQ', sector:'Technology', color:'#00a4ef', currency:'USD',
+    about_en: 'Microsoft develops and sells software, services, devices and cloud computing solutions. Its products include Windows, Office 365, Azure cloud platform, and the Xbox gaming ecosystem.',
+    about_fr: "Microsoft développe des logiciels, services et solutions infonuagiques. Ses produits incluent Windows, Office 365, la plateforme Azure et l'écosystème Xbox.",
+    founded:'1975', employees:'220,000', country:'USA', website:'microsoft.com' },
+  'GOOGL':   { name:'Alphabet Inc.', exchange:'NASDAQ', sector:'Technology', color:'#4285f4', currency:'USD',
+    about_en: 'Alphabet is the parent company of Google, the world\'s most used search engine. Its revenue comes primarily from advertising, but it also operates YouTube, Google Cloud, and various "Other Bets" like Waymo self-driving cars.',
+    about_fr: "Alphabet est la société mère de Google, le moteur de recherche le plus utilisé au monde. Ses revenus proviennent principalement de la publicité, YouTube, Google Cloud et des projets innovants comme Waymo.",
+    founded:'1998', employees:'190,000', country:'USA', website:'abc.xyz' },
+  'AMZN':    { name:'Amazon.com Inc.', exchange:'NASDAQ', sector:'Consumer', color:'#ff9900', currency:'USD',
+    about_en: 'Amazon started as an online bookstore and became the world\'s largest e-commerce platform. It also operates Amazon Web Services (AWS), the leading cloud computing platform used by millions of businesses worldwide.',
+    about_fr: "Amazon a débuté comme librairie en ligne avant de devenir la plus grande plateforme de commerce électronique mondiale. Elle opère aussi AWS, la première plateforme infonuagique utilisée par des millions d'entreprises.",
+    founded:'1994', employees:'1,500,000', country:'USA', website:'amazon.com' },
+  'TSLA':    { name:'Tesla Inc.', exchange:'NASDAQ', sector:'Consumer', color:'#cc0000', currency:'USD',
+    about_en: 'Tesla designs and manufactures electric vehicles, battery energy storage, solar panels and related products. It is the world\'s leading electric vehicle manufacturer and also develops autonomous driving technology.',
+    about_fr: "Tesla conçoit et fabrique des véhicules électriques, du stockage d'énergie par batterie et des panneaux solaires. C'est le premier fabricant mondial de véhicules électriques.",
+    founded:'2003', employees:'127,000', country:'USA', website:'tesla.com' },
+  'SHOP.TO': { name:'Shopify Inc.', exchange:'TSX', sector:'Technology', color:'#96bf48', currency:'CAD',
+    about_en: 'Shopify is a Canadian company that provides e-commerce software, enabling businesses of all sizes to set up and run online stores. It powers over 1.7 million merchants worldwide across 175 countries.',
+    about_fr: "Shopify est une entreprise canadienne qui fournit des logiciels de commerce électronique, permettant aux entreprises de toutes tailles de créer et gérer des boutiques en ligne. Elle compte plus de 1,7 million de marchands dans 175 pays.",
+    founded:'2006', employees:'11,600', country:'Canada (Ottawa)', website:'shopify.com' },
+  'RY.TO':   { name:'Royal Bank of Canada', exchange:'TSX', sector:'Finance', color:'#003168', currency:'CAD',
+    about_en: 'Royal Bank of Canada (RBC) is Canada\'s largest bank by market capitalization and one of the largest in North America. It offers personal and commercial banking, wealth management, insurance, and capital markets services.',
+    about_fr: "La Banque Royale du Canada (RBC) est la plus grande banque canadienne par capitalisation boursière. Elle offre des services bancaires personnels et commerciaux, de gestion de patrimoine, d'assurance et de marchés des capitaux.",
+    founded:'1864', employees:'97,000', country:'Canada (Toronto)', website:'rbc.com' },
+  'ENB.TO':  { name:'Enbridge Inc.', exchange:'TSX', sector:'Energy', color:'#e03e2d', currency:'CAD',
+    about_en: 'Enbridge is North America\'s largest pipeline company, transporting approximately 30% of North American crude oil and 20% of natural gas consumed in the US. It also operates a growing renewable energy business.',
+    about_fr: "Enbridge est la plus grande entreprise de pipelines en Amérique du Nord, transportant environ 30% du pétrole brut et 20% du gaz naturel consommé aux États-Unis. Elle opère aussi un secteur d'énergies renouvelables croissant.",
+    founded:'1949', employees:'13,000', country:'Canada (Calgary)', website:'enbridge.com' },
+  'TD.TO':   { name:'Toronto-Dominion Bank', exchange:'TSX', sector:'Finance', color:'#34b233', currency:'CAD',
+    about_en: 'TD Bank is Canada\'s second-largest bank and one of the top 10 banks in North America. It provides retail and commercial banking services in Canada and the US, serving over 27 million customers worldwide.',
+    about_fr: "TD Bank est la deuxième plus grande banque canadienne et l'une des 10 premières en Amérique du Nord. Elle offre des services bancaires de détail et commerciaux au Canada et aux États-Unis, servant plus de 27 millions de clients.",
+    founded:'1855', employees:'95,000', country:'Canada (Toronto)', website:'td.com' },
+};
+
+// ── INDICATORS DEFINITIONS ────────────────────────────────────
+const INDICATORS = {
+  pe: {
+    name_en: 'P/E Ratio', name_fr: 'Ratio C/B',
+    explain_en: 'The Price-to-Earnings ratio shows how much investors pay for each dollar of company profit. A higher P/E means investors expect stronger future growth. The S&P 500 average is around 20x. There is no universally "good" P/E — it depends on the industry.',
+    explain_fr: "Le ratio cours/bénéfice indique combien les investisseurs paient pour chaque dollar de profit de l'entreprise. Un P/E élevé signifie que les investisseurs anticipent une forte croissance. La moyenne du S&P 500 est d'environ 20x.",
+    getRating: (v) => v == null ? 'neu' : v < 15 ? 'good' : v < 30 ? 'warn' : 'bad',
+    getRatingLabel_en: (v) => v == null ? 'N/A' : v < 15 ? 'Value' : v < 30 ? 'Fair' : 'Expensive',
+    getRatingLabel_fr: (v) => v == null ? 'N/D' : v < 15 ? 'Valeur' : v < 30 ? 'Juste' : 'Élevé',
+  },
+  eps: {
+    name_en: 'EPS (Earnings Per Share)', name_fr: 'BPA (Bénéfice par action)',
+    explain_en: 'Earnings Per Share shows how much profit a company makes for each share of stock. A higher EPS means the company is more profitable. It\'s one of the most important indicators of financial health.',
+    explain_fr: "Le bénéfice par action indique combien de profit l'entreprise génère pour chaque action en circulation. Un BPA plus élevé indique une meilleure rentabilité. C'est l'un des indicateurs les plus importants de santé financière.",
+    getRating: (v) => v > 5 ? 'good' : v > 0 ? 'warn' : 'bad',
+    getRatingLabel_en: (v) => v > 5 ? 'Strong' : v > 0 ? 'Positive' : 'Negative',
+    getRatingLabel_fr: (v) => v > 5 ? 'Fort' : v > 0 ? 'Positif' : 'Négatif',
+  },
+  week52High: {
+    name_en: '52-Week High', name_fr: 'Sommet sur 52 semaines',
+    explain_en: 'The highest price the stock reached in the past year. When a stock trades close to its 52-week high, it may indicate strong momentum. Trading far below it could mean the stock has declined significantly.',
+    explain_fr: "Le prix le plus élevé atteint par l'action au cours de la dernière année. Quand une action se négocie près de son sommet, cela peut indiquer une forte dynamique. Loin en dessous pourrait signifier une baisse significative.",
+    getRating: () => 'neu',
+    getRatingLabel_en: () => '',
+    getRatingLabel_fr: () => '',
+  },
+  week52Low: {
+    name_en: '52-Week Low', name_fr: 'Creux sur 52 semaines',
+    explain_en: 'The lowest price the stock reached in the past year. This is often used as a support level — a price level where buyers tend to step in. Stocks near their 52-week low may be considered undervalued or in decline.',
+    explain_fr: "Le prix le plus bas atteint par l'action au cours de la dernière année. Souvent utilisé comme niveau de support — un niveau de prix où les acheteurs tendent à intervenir. Les actions près de leur creux peuvent être considérées sous-évaluées.",
+    getRating: () => 'neu',
+    getRatingLabel_en: () => '',
+    getRatingLabel_fr: () => '',
+  },
+  dividend: {
+    name_en: 'Dividend Yield', name_fr: 'Rendement du dividende',
+    explain_en: 'The annual dividend payment as a percentage of the stock price. A dividend is a cash payment companies make to shareholders. A higher yield can mean good income, but very high yields (>7%) may signal financial stress.',
+    explain_fr: "Le dividende annuel en pourcentage du prix de l'action. Un dividende est un paiement en espèces que les entreprises versent aux actionnaires. Un rendement élevé peut indiquer de bons revenus, mais très élevé (>7%) peut signaler des difficultés.",
+    getRating: (v) => v == 0 ? 'neu' : v < 3 ? 'good' : v < 7 ? 'warn' : 'bad',
+    getRatingLabel_en: (v) => v == 0 ? 'No dividend' : v < 3 ? 'Moderate' : v < 7 ? 'High' : 'Very high',
+    getRatingLabel_fr: (v) => v == 0 ? 'Aucun dividende' : v < 3 ? 'Modéré' : v < 7 ? 'Élevé' : 'Très élevé',
+  },
+  beta: {
+    name_en: 'Beta (Volatility)', name_fr: 'Bêta (Volatilité)',
+    explain_en: 'Beta measures how much a stock moves compared to the market. Beta of 1 = moves like the market. Beta > 1 = more volatile (higher risk, higher potential reward). Beta < 1 = more stable. Great for understanding your risk level.',
+    explain_fr: "Le bêta mesure comment une action bouge par rapport au marché. Bêta de 1 = bouge comme le marché. Bêta > 1 = plus volatile (risque plus élevé, potentiel de gain plus grand). Bêta < 1 = plus stable.",
+    getRating: (v) => v < 0.8 ? 'good' : v < 1.5 ? 'warn' : 'bad',
+    getRatingLabel_en: (v) => v < 0.8 ? 'Low risk' : v < 1.5 ? 'Medium risk' : 'High risk',
+    getRatingLabel_fr: (v) => v < 0.8 ? 'Risque faible' : v < 1.5 ? 'Risque moyen' : 'Risque élevé',
+  },
+};
+
+// ── LANGUAGE ──────────────────────────────────────────────────
+function setLang(lang, btn) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('[data-en]').forEach(el => {
+    el.textContent = lang === 'fr' ? el.dataset.fr : el.dataset.en;
+  });
+  // Re-render indicators if loaded
+  if (window._stockData) renderIndicators(window._stockData);
+}
+
+// ── TABS ──────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(`tab-${id}`).classList.add('active');
+  if (id === 'news' && !window._newsLoaded) loadNews();
+}
+
+// ── FETCH PRICE (Finnhub) ─────────────────────────────────────
+async function fetchPrice(sym) {
+  try {
+    const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${NS_KEY}`);
+    if (!r.ok) {
+      console.error(`Finnhub ${r.status} for ${sym}`);
+      return null;
+    }
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+async function fetchProfile(sym) {
+  try {
+    const r = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${sym}&token=${NS_KEY}`);
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+async function fetchMetrics(sym) {
+  try {
+    const r = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${NS_KEY}`);
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+
+
+async function fetchNewsAPI(sym) {
+  try {
+    const to   = new Date().toISOString().split('T')[0];
+    const from = new Date(Date.now() - 7*86400000).toISOString().split('T')[0];
+    const r = await fetch(`https://finnhub.io/api/v1/company-news?symbol=${sym}&from=${from}&to=${to}&token=${NS_KEY}`);
+    return await r.json();
+  } catch(e) { return []; }
+}
+
+// ── FORMAT HELPERS ────────────────────────────────────────────
+function fmtNum(n) {
+  if (n == null) return '—';
+  if (n >= 1e12) return '$' + (n/1e12).toFixed(2) + 'T';
+  if (n >= 1e9)  return '$' + (n/1e9).toFixed(2) + 'B';
+  if (n >= 1e6)  return '$' + (n/1e6).toFixed(2) + 'M';
+  return n.toLocaleString();
+}
+function fmtVol(n) {
+  if (!n) return '—';
+  if (n >= 1e9) return (n/1e9).toFixed(1)+'B';
+  if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1)+'K';
+  return n;
+}
+function timeAgo(ts) {
+  const m = Math.floor((Date.now() - ts*1000) / 60000);
+  if (m < 60) return `${m}m ago`;
+  if (m < 1440) return `${Math.floor(m/60)}h ago`;
+  return `${Math.floor(m/1440)}d ago`;
+}
+
+// ── RENDER HEADER ─────────────────────────────────────────────
+function renderHeader(sym, quote, info) {
+  const db = STOCK_DB[sym] || {};
+  const price = quote?.c || 0;
+  const chg   = quote?.d || 0;
+  const chgPct = quote?.dp || 0;
+  const up = chgPct >= 0;
+  const cur = db.currency || 'USD';
+
+  document.getElementById('stockLogo').textContent = sym.replace('.TO','').slice(0,4);
+  document.getElementById('stockLogo').style.background = (db.color||'#3b9eff') + '22';
+  document.getElementById('stockLogo').style.color = db.color || '#3b9eff';
+  document.getElementById('stockSym').textContent = sym;
+  document.getElementById('stockName').textContent = info?.name || db.name || sym;
+  document.getElementById('stockExchange').textContent = db.exchange || info?.exchange || '—';
+  document.getElementById('stockSector').textContent = db.sector || info?.finnhubIndustry || '—';
+  document.getElementById('stockPrice').textContent = `$${price.toFixed(2)} ${cur}`;
+  const chgEl = document.getElementById('stockChange');
+  chgEl.textContent = `${up?'▲ +':'▼ '}${Math.abs(chgPct).toFixed(2)}% (${up?'+':''}${chg.toFixed(2)})`;
+  chgEl.className = 'price-change ' + (up ? 'up' : 'dn');
+  document.getElementById('stockUpdated').textContent =
+    currentLang === 'fr' ? `Mis à jour à ${new Date().toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'})}` :
+    `Updated at ${new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'})}`;
+
+  document.getElementById('statOpen').textContent = quote?.o ? `$${quote.o.toFixed(2)}` : '—';
+  document.getElementById('statHigh').textContent = quote?.h ? `$${quote.h.toFixed(2)}` : '—';
+  document.getElementById('statLow').textContent  = quote?.l ? `$${quote.l.toFixed(2)}` : '—';
+  document.getElementById('statVol').textContent  = info?.shareOutstanding ? fmtVol(info.shareOutstanding * 1e6) : '—';
+  document.title = `${sym} ${price > 0 ? '$'+price.toFixed(2) : ''} — NorthStock`;
+  document.getElementById('pageTitle').textContent = `${sym} — NorthStock`;
+}
+
+// ── RENDER ABOUT ──────────────────────────────────────────────
+function renderAbout(sym, info) {
+  const db = STOCK_DB[sym] || {};
+  const desc = currentLang === 'fr' ? (db.about_fr || db.about_en) : (db.about_en || '—');
+  document.getElementById('aboutTitle').textContent =
+    currentLang === 'fr' ? `À propos de ${info?.name || db.name || sym}` : `About ${info?.name || db.name || sym}`;
+  document.getElementById('aboutDesc').textContent = desc;
+
+  const cur = db.currency || 'USD';
+  const items = [
+    { label_en:'Founded', label_fr:'Fondée', val: db.founded || info?.ipo || '—' },
+    { label_en:'Employees', label_fr:'Employés', val: db.employees || (info?.employeeTotal ? fmtNum(info.employeeTotal) : '—') },
+    { label_en:'Country', label_fr:'Pays', val: db.country || info?.country || '—' },
+    { label_en:'Market Cap', label_fr:'Capitalisation', val: info?.marketCapitalization ? fmtNum(info.marketCapitalization * 1e6) : '—' },
+    { label_en:'Currency', label_fr:'Devise', val: cur },
+    { label_en:'Website', label_fr:'Site web', val: db.website || info?.weburl || '—' },
+  ];
+
+  document.getElementById('aboutGrid').innerHTML = items.map(i => `
+    <div class="about-item">
+      <div class="about-item-label">${currentLang==='fr'?i.label_fr:i.label_en}</div>
+      <div class="about-item-val">${i.val}</div>
+    </div>`).join('');
+}
+
+// ── RENDER INDICATORS ─────────────────────────────────────────
+function renderIndicators(data) {
+  window._stockData = data;
+  const { metrics, quote, sym } = data;
+  const m = metrics?.metric || {};
+
+  const vals = {
+    pe:        m['peInclExclTTM'] || m['peTTM'] || null,
+    eps:       m['epsTTM'] || null,
+    week52High: m['52WeekHigh'] || null,
+    week52Low:  m['52WeekLow']  || null,
+    dividend:  m['dividendYieldIndicatedAnnual'] || 0,
+    beta:      m['beta'] || null,
+  };
+
+  // Health overview
+  const healthItems = [
+    { icon:'💰', label_en:'Pays Dividend', label_fr:'Verse un dividende', val: vals.dividend > 0 ? `${vals.dividend.toFixed(2)}%` : (currentLang==='fr'?'Non':'No'), ok: vals.dividend > 0 },
+    { icon:'📉', label_en:'Volatility (Beta)', label_fr:'Volatilité (Bêta)', val: vals.beta ? vals.beta.toFixed(2) : '—', ok: vals.beta < 1.5 },
+    { icon:'📈', label_en:'Profitable (EPS > 0)', label_fr:'Rentable (BPA > 0)', val: vals.eps ? `$${vals.eps.toFixed(2)}` : '—', ok: vals.eps > 0 },
+    { icon:'🏷️', label_en:'Valuation (P/E)', label_fr:'Valorisation (C/B)', val: vals.pe ? `${vals.pe.toFixed(1)}x` : 'N/A', ok: vals.pe && vals.pe < 30 },
+  ];
+
+  document.getElementById('healthItems').innerHTML = healthItems.map(h => `
+    <div class="health-item">
+      <div class="health-item-left">
+        <div class="health-dot" style="background:${h.ok?'var(--green)':'var(--red)'}"></div>
+        ${h.icon} ${currentLang==='fr'?h.label_fr:h.label_en}
+      </div>
+      <div style="font-size:13px;font-family:var(--mono);color:${h.ok?'var(--green)':'var(--text2)'}">${h.val}</div>
+    </div>`).join('');
+
+  // Indicator cards
+  document.getElementById('indicatorsGrid').innerHTML = Object.entries(INDICATORS).map(([key, ind]) => {
+    const v = vals[key];
+    const displayVal = v == null ? '—' : key === 'dividend' ? `${v.toFixed(2)}%` : key === 'beta' ? v.toFixed(2) : key.includes('52') ? `$${v.toFixed(2)}` : key === 'eps' ? `$${v.toFixed(2)}` : `${v.toFixed(1)}x`;
+    const rating = ind.getRating(v);
+    const rLabel = currentLang === 'fr' ? ind.getRatingLabel_fr(v) : ind.getRatingLabel_en(v);
+    const name = currentLang === 'fr' ? ind.name_fr : ind.name_en;
+    const explain = currentLang === 'fr' ? ind.explain_fr : ind.explain_en;
+    return `
+    <div class="indicator-card" onclick="toggleIndicator(this)">
+      <div class="ind-header">
+        <div class="ind-name">${name}</div>
+        <div class="expand-icon">▾</div>
+      </div>
+      <div class="ind-val">${displayVal}</div>
+      ${rLabel ? `<div class="ind-rating ${rating}">${rLabel}</div>` : ''}
+      <div class="ind-expand">
+        <p class="ind-explain">${explain}</p>
+        <span class="learn-more">💡 ${currentLang==='fr'?'Cliquez pour réduire':'Click to collapse'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleIndicator(card) {
+  card.classList.toggle('expanded');
+}
+
+// ── CHART ─────────────────────────────────────────────────────
+
+
+// ── NEWS ──────────────────────────────────────────────────────
+async function loadNews() {
+  window._newsLoaded = true;
+  const list = document.getElementById('newsList');
+  list.innerHTML = `<div class="news-loading">${currentLang==='fr'?'Chargement...':'Loading...'}</div>`;
+  const articles = await fetchNewsAPI(currentSym);
+  if (!articles.length) {
+    list.innerHTML = `<div class="news-loading">${currentLang==='fr'?'Aucune actualité récente trouvée.':'No recent news found.'}</div>`;
+    return;
+  }
+  list.innerHTML = articles.slice(0,10).map(a => `
+    <div class="news-item" onclick="window.open('${a.url}','_blank')">
+      <div style="flex:1">
+        <div class="news-title">${a.headline}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <span class="news-source-badge">${a.source}</span>
+          <span class="news-time">${timeAgo(a.datetime)}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── MAIN INIT ─────────────────────────────────────────────────
+async function init() {
+  const params = new URLSearchParams(window.location.search);
+  currentSym = (params.get('sym') || 'NVDA').toUpperCase();
+
+  // Make sure API key is available (with fallback recovery)
+  const keyOK = await ensureKey();
+  if (!keyOK) {
+    document.getElementById('stockUpdated').textContent = '⚠️ API key not configured — please redeploy';
+    document.getElementById('stockUpdated').style.color = 'var(--red)';
+    return;
+  }
+
+  // Load all data in parallel
+  const [quote, profile, metrics] = await Promise.all([
+    fetchPrice(currentSym),
+    fetchProfile(currentSym),
+    fetchMetrics(currentSym),
+  ]);
+
+  renderHeader(currentSym, quote, profile);
+  renderAbout(currentSym, profile);
+  renderIndicators({ metrics, quote, sym: currentSym });
+  loadChart('1D', document.querySelector('.period-btn'));
+
+  // Auto-refresh price every 30s
+  setInterval(async () => {
+    const q = await fetchPrice(currentSym);
+    if (q) renderHeader(currentSym, q, profile);
+  }, 30000);
+}
+
+init();
+
+// ── TRADINGVIEW CHART ─────────────────────────────────────────
+// Free widget — no API key, no CORS, supports all symbols incl. TSX
+function loadChart(period, btn) {
+  // Update active button
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  // Map period to TradingView interval
+  const intervalMap = {
+    '1D': '5',    // 5-minute bars
+    '5D': '15',   // 15-minute bars
+    '1M': '60',   // 1-hour bars
+    'YTD': 'D',   // Daily
+    '1Y': 'D',    // Daily
+    '5Y': 'W',    // Weekly
+  };
+
+  // Map period to TradingView range
+  const rangeMap = {
+    '1D': '1D',
+    '5D': '5D',
+    '1M': '1M',
+    'YTD': 'YTD',
+    '1Y': '12M',
+    '5Y': '60M',
+  };
+
+  const interval = intervalMap[period] || 'D';
+  const range    = rangeMap[period] || '12M';
+
+  // Convert sym to TradingView format (SHOP.TO → TSX:SHOP)
+  let tvSym = currentSym;
+  if (currentSym.endsWith('.TO')) {
+    tvSym = 'TSX:' + currentSym.replace('.TO', '');
+  }
+
+  const container = document.getElementById('tradingview-widget');
+  container.innerHTML = '';
+
+  const script = document.createElement('script');
+  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  script.async = true;
+  script.innerHTML = JSON.stringify({
+    autosize: true,
+    symbol: tvSym,
+    interval: interval,
+    range: range,
+    timezone: 'America/New_York',
+    theme: 'dark',
+    style: '1',
+    locale: 'en',
+    backgroundColor: 'rgba(6, 17, 31, 1)',
+    gridColor: 'rgba(255, 255, 255, 0.05)',
+    hide_top_toolbar: false,
+    hide_legend: false,
+    save_image: false,
+    calendar: false,
+    hide_volume: false,
+    support_host: 'https://www.tradingview.com',
+  });
+  container.appendChild(script);
+
+  // Update chart title
+  const labels = {'1D':'Today','5D':'5 Days','1M':'1 Month','YTD':'Year to date','1Y':'1 Year','5Y':'5 Years'};
+  const titleEl = document.getElementById('chartTitle');
+  if (titleEl) titleEl.textContent = labels[period] || period;
+}
+
+</script>
+</body>
+</html>
