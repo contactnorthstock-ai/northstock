@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Canadian Stocks — NorthStock</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#06111f;--navy2:#0d1f3c;--blue:#3b9eff;--green:#22c55e;--red:#ef4444;--gold:#f59e0b;--purple:#a78bfa;--text:#f0f4f8;--text2:#8ea4bc;--text3:#4d6278;--border:rgba(255,255,255,0.07);--card:rgba(255,255,255,0.04);--card2:rgba(255,255,255,0.08);--radius:12px;--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--navy);color:var(--text);min-height:100vh}
+a{text-decoration:none;color:inherit}
+nav{background:var(--navy2);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.logo{font-size:19px;font-weight:600;letter-spacing:-.4px}.logo span{color:var(--blue)}
+.nav-links{display:flex;gap:2px}
+.nav-links a{color:var(--text2);font-size:13px;padding:6px 11px;border-radius:6px;transition:all .15s}
+.nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--card2)}
+.btn-ghost{font-size:12px;padding:6px 14px;border-radius:6px;border:1px solid var(--border);color:var(--text2);cursor:pointer;background:transparent;font-family:var(--font)}
+.page{max-width:1160px;margin:0 auto;padding:28px 32px}
+
+/* BEGINNER BANNER */
+.learn-banner{background:linear-gradient(135deg,rgba(59,158,255,0.1),rgba(167,139,250,0.08));border:1px solid rgba(59,158,255,0.2);border-radius:var(--radius);padding:16px 20px;margin-bottom:24px;display:flex;align-items:flex-start;gap:14px}
+.learn-icon{font-size:24px;flex-shrink:0;margin-top:2px}
+.learn-text h3{font-size:14px;font-weight:600;margin-bottom:3px}
+.learn-text p{font-size:13px;color:var(--text2);line-height:1.5}
+.learn-toggle{font-size:12px;color:var(--blue);cursor:pointer;margin-top:4px;display:inline-block}
+
+/* PAGE HEADER */
+.page-header{margin-bottom:20px}
+.page-header h1{font-size:26px;font-weight:700;letter-spacing:-.5px;margin-bottom:4px}
+.page-header p{font-size:13px;color:var(--text2)}
+
+/* SUMMARY CARDS */
+.summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.sum-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.sum-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.sum-val{font-size:20px;font-weight:700;font-family:var(--mono)}
+.sum-val.green{color:var(--green)}.sum-val.red{color:var(--red)}.sum-val.blue{color:var(--blue)}.sum-val.gold{color:var(--gold)}
+.sum-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.sum-tip{font-size:10px;color:var(--blue);margin-top:5px;cursor:pointer}
+
+/* FILTERS */
+.filter-row{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filter-btn{font-size:12px;padding:6px 14px;border-radius:20px;border:1px solid var(--border);color:var(--text2);cursor:pointer;background:transparent;font-family:var(--font);transition:all .15s}
+.filter-btn:hover{color:var(--text);border-color:var(--text2)}
+.filter-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.search-box{flex:1;max-width:280px;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;font-family:var(--font)}
+.search-box::placeholder{color:var(--text3)}
+.search-box:focus{outline:none;border-color:var(--blue)}
+
+/* TABLE */
+.stock-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:12px 16px;text-align:left;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);white-space:nowrap}
+th.r{text-align:right}
+td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+td.r{text-align:right}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--card2)}
+tr{cursor:pointer;transition:all .1s}
+.sym-cell{display:flex;align-items:center;gap:10px}
+.sym-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--mono);flex-shrink:0}
+.sym-name{font-size:11px;color:var(--text2);margin-top:1px}
+.exch-badge{font-size:9px;font-weight:600;padding:1px 5px;border-radius:4px;background:var(--card2);color:var(--text3);margin-left:4px}
+.up{color:var(--green)}.dn{color:var(--red)}
+.sector-badge{font-size:10px;padding:2px 7px;border-radius:6px;background:var(--card2);color:var(--text2)}
+
+/* TOOLTIP on th */
+th[data-tip]{cursor:help;position:relative}
+th[data-tip]:hover::after{content:attr(data-tip);position:absolute;top:100%;left:0;background:#0d1f3c;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--text2);white-space:normal;max-width:220px;z-index:200;line-height:1.5;font-weight:400;letter-spacing:0;text-transform:none}
+
+/* MINI BAR */
+.bar-cell{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text3)}
+.mini-bar{width:60px;height:4px;border-radius:2px;background:var(--border);position:relative;flex-shrink:0}
+.mini-fill{height:100%;border-radius:2px}
+
+/* LIVE BADGE */
+.live-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--green);background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:20px;padding:4px 12px;margin-bottom:16px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* DISCLAIMER */
+.disclaimer{font-size:11px;color:var(--text3);margin-top:24px;padding:12px;background:var(--card);border-radius:8px;border:1px solid var(--border);line-height:1.5}
+@media(max-width:900px){.page{padding:16px}.nav-links{display:none}.summary-row{grid-template-columns:1fr 1fr}}
+
+/* ── HAMBURGER MENU (mobile) ─────────────────────────── */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 6px;
+  border: none;
+  background: transparent;
+}
+.hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--text2);
+  border-radius: 2px;
+  transition: all .3s;
+}
+.hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+.mobile-menu {
+  display: none;
+  position: fixed;
+  top: 56px;
+  left: 0;
+  right: 0;
+  background: var(--navy2);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  z-index: 999;
+  flex-direction: column;
+  gap: 2px;
+}
+.mobile-menu a {
+  display: block;
+  color: var(--text2);
+  font-size: 15px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all .15s;
+}
+.mobile-menu a:hover, .mobile-menu a.active {
+  color: var(--text);
+  background: var(--card2);
+}
+.mobile-menu.open { display: flex; }
+
+@media (max-width: 900px) {
+  .nav-links { display: none !important; }
+  .hamburger { display: flex; }
+}
+
+/* ── CURRENCY TOGGLE ─────────────────────────────────────── */
+.currency-toggle { display:flex; gap:6px; align-items:center; }
+.cur-btn { padding:7px 16px; border-radius:8px; border:1px solid var(--border);
+  background:transparent; color:var(--text2); cursor:pointer; font-size:13px;
+  font-weight:600; font-family:var(--font); transition:all .2s; }
+.cur-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); }
+.cur-btn:hover:not(.active) { border-color:var(--blue); color:var(--text); }
+.usd-note { font-size:11px; color:var(--text3); margin-top:2px; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo"><a href="index.html">North<span>Stock</span></a></div>
+  <div class="nav-links">
+    <a href="index.html">News</a>
+    <a href="earnings.html">Earnings</a>
+    <a href="screener.html">Stock Finder</a>
+    <a href="dividends.html">Dividends</a>
+    <a href="canadian-stocks.html" class="active">🍁 Canadian</a>
+    <a href="us-stocks.html" class="">🇺🇸 US Stocks</a>
+    <a href="crypto.html" class="">₿ Crypto</a>
+    <a href="northstock-portfolio-live.html" style="color:var(--blue)">My Portfolio</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn-ghost" onclick="window.location.href='auth.html'">Sign in</button>
+  </div>
+  <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+<a href="index.html">News</a>
+    <a href="earnings.html">Earnings</a>
+    <a href="screener.html">Stock Finder</a>
+    <a href="dividends.html">Dividends</a>
+    <a href="canadian-stocks.html" class="active">🍁 Canadian</a>
+    <a href="us-stocks.html" class="">🇺🇸 US Stocks</a>
+    <a href="crypto.html" class="">₿ Crypto</a>
+    <a href="northstock-portfolio-live.html" style="color:var(--blue)">My Portfolio</a>
+</div>
+<div class="page">
+  <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1>🍁 Canadian Stocks</h1>
+      <p id="ca-currency-label">Top TSX equities — prices in Canadian dollars (CAD)</p>
+    </div>
+    <div class="currency-toggle">
+      <button class="cur-btn active" id="btn-cad" onclick="setCurrency('CAD',this)">🇨🇦 CAD</button>
+      <button class="cur-btn" id="btn-usd" onclick="setCurrency('USD',this)">🇺🇸 USD</button>
+    </div>
+  </div>
+
+  <!-- BEGINNER BANNER -->
+  <div class="learn-banner">
+    <div class="learn-icon">💡</div>
+    <div class="learn-text">
+      <h3>New to Canadian stocks?</h3>
+      <p>The <strong>TSX (Toronto Stock Exchange)</strong> is Canada's main stock market. Prices are in <strong>Canadian dollars (CAD)</strong>. Canadian stocks often pay strong dividends — great for TFSA and RRSP accounts where you pay no tax on gains.</p>
+      <span class="learn-toggle" onclick="this.parentElement.parentElement.style.display='none'">Got it, hide this ✕</span>
+    </div>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-row">
+    <div class="sum-card">
+      <div class="sum-label">TSX Composite</div>
+      <div class="sum-val blue" id="ca-tsx">24,188</div>
+      <div class="sum-sub" id="ca-tsx-sub">▲ +0.28% today</div>
+      <div class="sum-tip" onclick="alert('The TSX Composite Index tracks the performance of the largest companies on the Toronto Stock Exchange. Think of it as the Canadian equivalent of the S&P 500.')">❓ What is the TSX?</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Top Gainer</div>
+      <div class="sum-val green" id="ca-gainer">—</div>
+      <div class="sum-sub" id="ca-gainer-sub">loading...</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Biggest Drop</div>
+      <div class="sum-val red" id="ca-loser">—</div>
+      <div class="sum-sub" id="ca-loser-sub">loading...</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">USD/CAD Rate</div>
+      <div class="sum-val gold">1.384</div>
+      <div class="sum-sub">$1 USD = $1.38 CAD</div>
+      <div class="sum-tip" onclick="alert('When you buy Canadian stocks, prices are in CAD. If the Canadian dollar weakens vs USD, your returns in USD terms are lower. For Canadians investing in CAD, this does not matter.')">❓ Why does this matter?</div>
+    </div>
+  </div>
+
+  <div class="live-badge"><div class="live-dot"></div><span id="liveBadgeText">Fetching live prices...</span></div>
+
+  <div class="filter-row">
+    <button class="filter-btn active" onclick="filterSector('all',this)">All</button>
+    <button class="filter-btn" onclick="filterSector('Finance',this)">🏦 Finance</button>
+    <button class="filter-btn" onclick="filterSector('Technology',this)">💻 Tech</button>
+    <button class="filter-btn" onclick="filterSector('Energy',this)">⚡ Energy</button>
+    <button class="filter-btn" onclick="filterSector('Industrial',this)">🏭 Industrial</button>
+    <button class="filter-btn" onclick="filterSector('Telecom',this)">📡 Telecom</button>
+    <input class="search-box" type="text" placeholder="Search stocks..." oninput="searchStocks(this.value)">
+  </div>
+
+  <div class="stock-wrap">
+    <table>
+      <thead><tr>
+        <th>Stock</th>
+        <th class="r" data-tip="Current price. Toggle CAD/USD above." id="price-col-header">Price (CAD)</th>
+        <th class="r" data-tip="How much the price changed today in percentage. Green = up, Red = down.">Day Change</th>
+        <th class="r" data-tip="How much the price has changed over the past 52 weeks (1 year).">52W Change</th>
+        <th class="r" data-tip="Total value of all shares of this company. T = Trillion, B = Billion.">Market Cap</th>
+        <th class="r" data-tip="Annual dividend as a % of the stock price. A dividend is a cash payment to shareholders — great for TFSA income.">Div Yield ❓</th>
+        <th>Sector</th>
+        <th class="r" data-tip="The range between the lowest and highest price in the past 52 weeks. The marker shows where the current price sits.">52W Range</th>
+      </tr></thead>
+      <tbody id="caBody"></tbody>
+    </table>
+  </div>
+
+  <div class="disclaimer">⚠️ <strong>Disclaimer:</strong> Prices are delayed. NorthStock is for informational purposes only — not investment advice. Always do your own research. Canadian stocks are subject to TSX trading hours (9:30 AM – 4:00 PM ET, Mon–Fri).</div>
+</div>
+
+<script>
+const CA_STOCKS = [
+  {sym:'SHOP.TO',name:'Shopify Inc.',price:118.40,chgDay:1.35,chg52w:38.6,mcap:'148B',divYield:0,sector:'Technology',w52l:72.10,w52h:134.20,color:'#96bf48'},
+  {sym:'RY.TO',name:'Royal Bank of Canada',price:174.20,chgDay:0.62,chg52w:12.4,mcap:'248B',divYield:3.26,sector:'Finance',w52l:143.80,w52h:184.50,color:'#003168'},
+  {sym:'TD.TO',name:'TD Bank',price:78.77,chgDay:-0.18,chg52w:-8.4,mcap:'138B',divYield:5.18,sector:'Finance',w52l:72.10,w52h:92.40,color:'#34b233'},
+  {sym:'ENB.TO',name:'Enbridge Inc.',price:58.30,chgDay:0.44,chg52w:8.2,mcap:'118B',divYield:7.82,sector:'Energy',w52l:49.20,w52h:62.80,color:'#e03e2d'},
+  {sym:'CNR.TO',name:'CN Rail',price:158.10,chgDay:0.22,chg52w:4.8,mcap:'98B',divYield:2.14,sector:'Industrial',w52l:140.20,w52h:174.30,color:'#d52b1e'},
+  {sym:'CNQ.TO',name:'Canadian Natural Resources',price:50.44,chgDay:1.12,chg52w:6.2,mcap:'84B',divYield:4.52,sector:'Energy',w52l:43.10,w52h:58.20,color:'#003366'},
+  {sym:'BMO.TO',name:'Bank of Montreal',price:118.80,chgDay:0.38,chg52w:2.1,mcap:'92B',divYield:5.22,sector:'Finance',w52l:104.20,w52h:134.60,color:'#0075be'},
+  {sym:'BNS.TO',name:'Scotiabank',price:72.40,chgDay:0.14,chg52w:-2.8,mcap:'88B',divYield:6.18,sector:'Finance',w52l:64.30,w52h:82.10,color:'#cc0000'},
+  {sym:'SU.TO',name:'Suncor Energy',price:50.44,chgDay:1.12,chg52w:14.2,mcap:'64B',divYield:4.52,sector:'Energy',w52l:40.20,w52h:58.40,color:'#e83f2d'},
+  {sym:'ATD.TO',name:'Alimentation Couche-Tard',price:72.80,chgDay:0.44,chg52w:8.4,mcap:'78B',divYield:0.88,sector:'Industrial',w52l:62.10,w52h:84.20,color:'#e83f2d'},
+  {sym:'CP.TO',name:'Canadian Pacific Kansas City',price:108.40,chgDay:0.28,chg52w:6.8,mcap:'72B',divYield:0.74,sector:'Industrial',w52l:94.20,w52h:124.80,color:'#d52b1e'},
+  {sym:'MFC.TO',name:'Manulife Financial',price:38.86,chgDay:0.52,chg52w:18.4,mcap:'76B',divYield:4.12,sector:'Finance',w52l:28.40,w52h:42.10,color:'#007744'},
+  {sym:'T.TO',name:'TELUS Corporation',price:22.05,chgDay:-0.18,chg52w:-8.2,mcap:'32B',divYield:7.21,sector:'Telecom',w52l:19.80,w52h:26.40,color:'#4b286d'},
+  {sym:'BCE.TO',name:'BCE Inc.',price:46.01,chgDay:-0.82,chg52w:-12.4,mcap:'42B',divYield:8.41,sector:'Telecom',w52l:42.10,w52h:56.80,color:'#0033a0'},
+  {sym:'ABX.TO',name:'Barrick Gold',price:18.97,chgDay:0.84,chg52w:22.4,mcap:'34B',divYield:2.11,sector:'Materials',w52l:14.20,w52h:24.80,color:'#b8960c'},
+  {sym:'WPM.TO',name:'Wheaton Precious Metals',price:82.40,chgDay:1.24,chg52w:28.4,mcap:'38B',divYield:1.04,sector:'Materials',w52l:58.20,w52h:94.80,color:'#c0c0c0'},
+  {sym:'CSU.TO',name:'Constellation Software',price:4248.00,chgDay:0.82,chg52w:28.4,mcap:'92B',divYield:0.12,sector:'Technology',w52l:3180.00,w52h:4680.00,color:'#1a5276'},
+  {sym:'TRI.TO',name:'Thomson Reuters',price:218.40,chgDay:0.42,chg52w:14.8,mcap:'62B',divYield:1.28,sector:'Technology',w52l:182.40,w52h:238.80,color:'#cc5500'},
+  {sym:'QSR.TO',name:'Restaurant Brands Intl.',price:84.20,chgDay:-0.24,chg52w:4.2,mcap:'28B',divYield:3.82,sector:'Industrial',w52l:72.10,w52h:96.40,color:'#c8102e'},
+  {sym:'IFC.TO',name:'Intact Financial',price:274.80,chgDay:0.62,chg52w:12.4,mcap:'48B',divYield:2.08,sector:'Finance',w52l:228.40,w52h:294.20,color:'#003087'},
+];
+let filtered = [...CA_STOCKS];
+let liveData = {};
+const NS_KEY = '__FINNHUB_KEY__';
+
+// ── CURRENCY TOGGLE ───────────────────────────────────────
+let currentCurrency = 'CAD';
+let usdCadRate = null;
+
+async function fetchUSDCAD() {
+  try {
+    const r = await fetch('https://finnhub.io/api/v1/forex/rates?base=USD&token=' + NS_KEY);
+    const d = await r.json();
+    if (d && d.quote && d.quote.CAD) {
+      usdCadRate = d.quote.CAD;
+      console.log('USD/CAD rate:', usdCadRate);
+    }
+  } catch(e) {
+    usdCadRate = 1.38; // fallback
+  }
+}
+
+function setCurrency(cur, btn) {
+  currentCurrency = cur;
+  document.querySelectorAll('.cur-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const label = document.getElementById('ca-currency-label');
+  const priceHeader = document.getElementById('price-col-header');
+  if (priceHeader) priceHeader.textContent = cur === 'CAD' ? 'Price (CAD)' : 'Price (USD ≈)';
+  if (label) label.textContent = cur === 'CAD'
+    ? 'Top TSX equities — prices in Canadian dollars (CAD)'
+    : 'Top TSX equities — prices converted to US dollars (USD, approx.)';
+  render();
+}
+
+
+async function ns_fetchTSX(symbols) {
+  if (!symbols.length) return {};
+  try {
+    const base = window.location.origin + (window.location.pathname.includes('/northstock') ? '/northstock' : '');
+    const r = await fetch(`${base}/data/prices-tsx.json?t=${Date.now()}`);
+    if (r.ok) {
+      const data = await r.json();
+      const out = {};
+      symbols.forEach(sym => {
+        if (data.prices?.[sym]) {
+          out[sym] = { ...data.prices[sym] };
+          // Merge fundamentals if available
+          if (data.fundamentals?.[sym]) {
+            const f = data.fundamentals[sym];
+            const stock = CA_STOCKS.find(s => s.sym === sym);
+            if (stock) {
+              if (f.pe)       stock.pe       = f.pe;
+              if (f.divYield) stock.divYield = f.divYield;
+              if (f.w52h)     stock.w52h     = f.w52h;
+              if (f.w52l)     stock.w52l     = f.w52l;
+            }
+          }
+        }
+      });
+      if (Object.keys(out).length > 0) return out;
+    }
+  } catch(e) {}
+  return {};
+}
+
+async function loadLivePrices() {
+  const prices = await ns_fetchTSX(CA_STOCKS.map(s => s.sym));
+  Object.assign(liveData, prices);
+  updateSummaryCards();
+  render();
+  const cnt = CA_STOCKS.filter(s => liveData[s.sym]).length;
+  const n = new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('liveBadgeText').textContent = `${cnt} live prices (CAD) · Updated ${n}`;
+  setInterval(async () => {
+    const p2 = await ns_fetchTSX(CA_STOCKS.map(s => s.sym));
+    Object.assign(liveData, p2);
+    updateSummaryCards();
+    render();
+    document.getElementById('liveBadgeText').textContent = `${Object.keys(liveData).length} live · ${new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'})}`;
+  }, 30000);
+}
+
+function updateSummaryCards() {
+  const withData = CA_STOCKS.filter(s => liveData[s.sym]);
+  if (!withData.length) return;
+  const sorted = [...withData].sort((a,b) => (liveData[b.sym].pct||0) - (liveData[a.sym].pct||0));
+  const top = sorted[0], bot = sorted[sorted.length-1];
+  if (top) { document.getElementById('ca-gainer').textContent = top.sym; document.getElementById('ca-gainer-sub').textContent = `+${liveData[top.sym].pct.toFixed(2)}% today`; }
+  if (bot && liveData[bot.sym].pct < 0) { document.getElementById('ca-loser').textContent = bot.sym; document.getElementById('ca-loser-sub').textContent = `${liveData[bot.sym].pct.toFixed(2)}% today`; }
+}
+
+function filterSector(s,btn) {
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  filtered = s==='all' ? [...CA_STOCKS] : CA_STOCKS.filter(x=>x.sector===s);
+  render();
+}
+function searchStocks(q) {
+  const lq=q.toLowerCase();
+  filtered=CA_STOCKS.filter(s=>s.sym.toLowerCase().includes(lq)||s.name.toLowerCase().includes(lq));
+  render();
+}
+function render() {
+  document.getElementById('caBody').innerHTML = filtered.map(s => {
+    const live = liveData[s.sym];
+    const priceCAD = live ? live.price : s.price;
+    const price = (currentCurrency === 'USD' && usdCadRate)
+      ? priceCAD / usdCadRate
+      : priceCAD;
+    const pct = live ? live.pct : s.chgDay;
+    const sym3 = s.sym.replace('.TO','').slice(0,4);
+    const range = s.w52h - s.w52l;
+    const pos = Math.min(100,Math.max(0, range>0 ? ((price-s.w52l)/range*100) : 50));
+    const fill = pct>=0 ? 'var(--green)' : 'var(--red)';
+    const liveDot = live ? '<span style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block;margin-left:4px"></span>' : '';
+    return `<tr onclick="window.location.href='stock.html?sym=${s.sym}'">
+      <td><div class="sym-cell">
+        <div class="sym-icon" style="background:${s.color}22;color:${s.color}">${sym3}</div>
+        <div><div style="font-size:13px;font-weight:600;font-family:var(--mono)">${s.sym}${liveDot}</div><div class="sym-name">${s.name}</div></div>
+      </div></td>
+      <td class="r" style="font-weight:500;font-family:var(--mono)">$${price.toFixed(2)}</td>
+      <td class="r ${pct>=0?'up':'dn'}">${pct>=0?'+':''}${pct.toFixed(2)}%</td>
+      <td class="r ${s.chg52w>=0?'up':'dn'}">${s.chg52w>=0?'+':''}${s.chg52w.toFixed(1)}%</td>
+      <td class="r">${s.mcap}</td>
+      <td class="r" style="color:${s.divYield>0?'var(--green)':'var(--text3)'}">${s.divYield>0?s.divYield.toFixed(2)+'%':'—'}</td>
+      <td><span class="sector-badge">${s.sector}</span></td>
+      <td class="r"><div class="bar-cell">
+        <span>$${s.w52l}</span>
+        <div class="mini-bar"><div class="mini-fill" style="width:${pos}%;background:${fill}"></div></div>
+        <span>$${s.w52h}</span>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+render();
+fetchUSDCAD();
+loadLivePrices();
+</script>
+
+<script>
+function toggleMenu() {
+  var btn  = document.getElementById('hamburger');
+  var menu = document.getElementById('mobileMenu');
+  if (!btn || !menu) return;
+  btn.classList.toggle('open');
+  menu.classList.toggle('open');
+}
+// Close menu when clicking a link
+document.addEventListener('click', function(e) {
+  if (e.target.tagName === 'A' && e.target.closest('#mobileMenu')) {
+    document.getElementById('hamburger').classList.remove('open');
+    document.getElementById('mobileMenu').classList.remove('open');
+  }
+});
+</script>
+</body></html>
