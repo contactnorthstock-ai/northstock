@@ -1,0 +1,64 @@
+name: TSX Price Updater — Every 15 min (Market Hours)
+
+on:
+  schedule:
+    - cron: '30,45 13 * * 1-5'
+    - cron: '0,15,30,45 14,15,16,17,18,19 * * 1-5'
+    - cron: '0,15 20 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  fetch-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch TSX prices
+        run: python3 scripts/fetch_tsx.py
+
+      - name: Commit prices
+        run: |
+          git config user.name "NorthStock Bot"
+          git config user.email "bot@northstock.ca"
+          git add data/prices-tsx.json
+          if git diff --staged --quiet; then
+            echo "No changes"
+          else
+            git commit -m "📈 TSX prices — $(date -u '+%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
+
+      - name: Inject Finnhub API key into HTML
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: |
+          for f in *.html; do
+            if [ -f "$f" ]; then
+              sed -i "s/__FINNHUB_KEY__/${FINNHUB_API_KEY}/g" "$f"
+            fi
+          done
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
+        id: deployment
