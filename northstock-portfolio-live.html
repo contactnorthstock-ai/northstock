@@ -206,6 +206,18 @@ footer{background:var(--navy);border-top:1px solid var(--border);padding:18px 32
   nav{padding:0 16px}.nav-links{display:none}
   .page{padding:18px 16px}
 }
+
+/* HAMBURGER + MOBILE MENU */
+.hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 6px; border: none; background: transparent; }
+.hamburger span { display: block; width: 22px; height: 2px; background: var(--text2,#8ea4bc); border-radius: 2px; transition: all .3s; }
+.hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+.mobile-menu { display: none; position: fixed; top: 56px; left: 0; right: 0; background: var(--navy2,#0d1f3c); border-bottom: 1px solid var(--border,rgba(255,255,255,0.07)); padding: 12px 20px; z-index: 999; flex-direction: column; gap: 2px; }
+.mobile-menu a { display: block; color: var(--text2,#8ea4bc); font-size: 15px; padding: 10px 12px; border-radius: 8px; text-decoration: none; transition: all .15s; }
+.mobile-menu a:hover, .mobile-menu a.active { color: var(--text,#f0f4f8); background: var(--card2,rgba(255,255,255,0.07)); }
+.mobile-menu.open { display: flex; }
+@media (max-width: 900px) { .nav-links { display: none !important; } .hamburger { display: flex; } }
 </style>
 </head>
 <body>
@@ -233,20 +245,36 @@ footer{background:var(--navy);border-top:1px solid var(--border);padding:18px 32
 
 <!-- NAV -->
 <nav>
-  <div class="logo">North<span>Stock</span></div>
+  <div class="logo"><a href="index.html" style="text-decoration:none;color:inherit">North<span>Stock</span></a></div>
   <div class="nav-links">
     <a href="index.html">News</a>
     <a href="earnings.html">Earnings Calendar</a>
     <a href="screener.html">Top Picks</a>
     <a href="dividends.html">Dividends</a>
-    <a href="northstock-portfolio-live.html" class="active ptab">My Portfolio</a>
+    <a href="canadian-stocks.html">🍁 Canadian</a>
+    <a href="us-stocks.html">🇺🇸 US Stocks</a>
+    <a href="crypto.html">₿ Crypto</a>
+    <a href="northstock-portfolio-live.html" class="active ptab" style="color:var(--blue,#3b9eff)">My Portfolio</a>
   </div>
   <div class="nav-right">
     <div class="live-dot"></div>
     <span class="live-label">Live prices</span>
     <button class="btn-ghost" onclick="window.location.href='auth.html'">Sign in</button>
   </div>
+  <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index.html">News</a>
+  <a href="earnings.html">Earnings Calendar</a>
+  <a href="screener.html">Top Picks</a>
+  <a href="dividends.html">Dividends</a>
+  <a href="canadian-stocks.html">🍁 Canadian</a>
+  <a href="us-stocks.html">🇺🇸 US Stocks</a>
+  <a href="crypto.html">₿ Crypto</a>
+  <a href="northstock-portfolio-live.html" class="active">My Portfolio</a>
+</div>
 
 <div class="page">
 
@@ -507,7 +535,7 @@ footer{background:var(--navy);border-top:1px solid var(--border);padding:18px 32
 // ═══════════════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════════════
-const FINNHUB_KEY = 'd7i3grhr01qu8vfn7qdgd7i3grhr01qu8vfn7qe0';
+const FINNHUB_KEY = '__FINNHUB_KEY__';
 const FINNHUB_URL = 'https://finnhub.io/api/v1';
 const COINGECKO_URL = 'https://api.coingecko.com/api/v3';
 
@@ -1662,6 +1690,19 @@ loadDemo();
 render();
 setStatus('loading','Starting live price feed...');
 startAutoRefresh();
+</script>
+<script>
+function toggleMenu() {
+  var btn = document.getElementById('hamburger');
+  var menu = document.getElementById('mobileMenu');
+  if (btn && menu) { btn.classList.toggle('open'); menu.classList.toggle('open'); }
+}
+document.addEventListener('click', function(e) {
+  if (e.target.tagName === 'A' && e.target.closest('#mobileMenu')) {
+    document.getElementById('hamburger')?.classList.remove('open');
+    document.getElementById('mobileMenu')?.classList.remove('open');
+  }
+});
 </script>
 </body>
 </html>
